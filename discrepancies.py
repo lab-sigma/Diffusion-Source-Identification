@@ -1,0 +1,97 @@
+import numpy as np
+
+def L2_h(t_z, T):
+    return 2
+
+def ADT_h(t_z, T):
+    return (T - t_z)/T
+
+def ADT2_h(t_z, T):
+    return ((T - t_z)/T)**2
+
+def ADiT_h(t_z, T):
+    return 1/t_z
+
+def ADiT2_h(t_z, T):
+    return 1/(t_z*t_z)
+
+################################
+
+def L2(G, x, Y, s):
+    return len(x ^ Y)
+
+def Ld(G, x, Y, s):
+    k = 3
+    count = 0
+    for node in x ^ Y:
+        if G.dist(node, s) <= k:
+            count += 1
+    return count
+
+def Le(G, x, Y, s):
+    loss = 0.0
+    for node in x ^ Y:
+        loss += np.exp(-G.dist(node, s))
+    return loss
+
+def Ll(G, x, Y, s):
+    loss = 0.0
+    for node in x ^ Y:
+        loss += 1.0/G.dist(node, s)
+    return loss
+
+def Lm(G, x, Y, s):
+    if x == Y:
+        return 0.0
+    return 1.0
+
+def first_miss_loss(G, x, samples, s, weights = None):
+    min_steps = []
+    if not weights is None:
+        for sample, weight in zip(samples, weights):
+            for i in range(len(sample)):
+                if not sample[i] in x:
+                    min_steps += [weight*i]
+                    break
+    else:
+        for sample in samples:
+            for i in range(len(sample)):
+                if not sample[i] in x:
+                    min_steps += [i]
+                    break
+    return -np.mean(min_steps)
+
+def avg_deviation_time(G, x, samples, s):
+    avg_steps = list()
+    T_l = len(samples[0])
+    for sample in samples:
+        avg_steps.append(np.mean([T_l - i*(not sample[i] in x) for i in range(T_l)]))
+        #for i in range(T):
+        #    if not sample[i] in x:
+        #        diff_steps.append(T - i)
+        #avg_steps.append(np.mean(diff_steps))
+    return np.mean(avg_steps)
+
+def avg_matching_time(G, x, samples, s):
+    avg_match = list()
+    T_l = len(samples[0])
+    for sample in samples:
+        #same_steps = list()
+        #T = len(sample)
+        #for i in range(T):
+        #    if sample[i] in x:
+        #        same_steps.append(i)
+        #avg_match.append(np.mean(same_steps))
+        avg_match.append(np.mean([i*(sample[i] in x) for i in range(T_l)]))
+    return -np.mean(avg_match)
+
+def distance_loss(G, x, samples, s):
+    return sum([G.dist(i, s) for i in x])
+
+def min_dist(G, x, samples, s):
+    return -1*min([G.dist(i, s) for i in set(G.graph.nodes()) - set(x)])
+
+def max_dist(G, x, samples, s):
+    return max([G.dist(i, s) for i in x])
+
+##############################################################

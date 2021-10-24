@@ -1,12 +1,10 @@
 import networkx as nx
 import numpy as np
 from scipy.stats import powerlaw
-from scipy.stats import uniform
-import pandas as pd
 import random
 
 class Graph:
-    def __init__(self, N, setup_distances=False):
+    def __init__(self, N, setup_distances=True):
         self.N = N
 
         #print("Generating neighbor dict")
@@ -32,6 +30,67 @@ class Graph:
             self.distances[i][j] = nx.shortest_path_length(self.graph, i, j)
         return self.distances[i][j]
 
+    def sample(self, s, T):
+        edges = set()
+        for n in self.neighbors[s]:
+            edges.add((s, n))
+        infected = set([s])
+        infection_order = [s]
+        for _ in range(1, T):
+            jump = random.sample(edges, 1)[0]
+            infected.add(jump[1])
+            infection_order.append(jump[1])
+            for n in self.neighbors[jump[1]]:
+                if n in infected:
+                    edges.discard((n, jump[1]))
+                else:
+                    edges.add((jump[1], n))
+        return infected, infection_order
+
+    def sample_d1(self, s, T):
+        edges = set()
+        for n in self.neighbors[s]:
+            edges.add((s, n))
+        infected = set([s])
+        infection_order = [s]
+        degree_list = [len(edges)]
+        for _ in range(1, T):
+            jump = random.sample(edges, 1)[0]
+            infected.add(jump[1])
+            infection_order.append(jump[1])
+            for n in self.neighbors[jump[1]]:
+                if n in infected:
+                    edges.discard((n, jump[1]))
+                else:
+                    edges.add((jump[1], n))
+            degree_list.append(len(edges))
+        return infected, infection_order, degree_list
+
+    def select_source(self, seed=None):
+        if seed is not None:
+            random.seed(seed)
+        #self.source = random.sample(set(self.graph.nodes), 1)[0]
+        #return self.source
+        #for n in self.graph.nodes:
+        #    if self.graph.degree[n] == 1:
+        #        return n
+        u = nx.eigenvector_centrality_numpy(self.graph)
+        median = np.median(np.absolute(list(u.values())))
+        #u_min = min([abs(u[ui]) for ui in u.keys() if abs(u[ui]) >= median])
+        #u = [ui for ui in u.keys() if abs(u[ui]) == u_min]
+        #return u[0]
+        u = [ui for ui in u.keys() if abs(u[ui]) >= median]
+        if len(u) == 0:
+            u = set(self.graph.nodes)
+        else:
+            u = set(u)
+        self.source = random.sample(u, 1)[0]
+        return self.source
+
+    def select_uniform_source(self):
+        self.source = random.sample(set(self.graph.nodes()), 1)[0]
+        return self.source
+
 class DirectedGraph(Graph):
     def __init__(self, N):
         super().__init__(N)
@@ -43,8 +102,6 @@ class DirectedGraph(Graph):
         infected = set([s])
         infection_order = [s]
         for _ in range(1, T):
-            if len(edges) == 0:
-                break
             jump = random.sample(edges, 1)[0]
             infected.add(jump[1])
             infection_order.append(jump[1])
@@ -54,7 +111,7 @@ class DirectedGraph(Graph):
             edges = set([e for e in edges if (not e[1] in infected)])
         return infected, infection_order
 
-    def select_best_source(self):
+    def select_source(self):
         best = -1
         reachable = -1
         for n in self.graph.nodes:
@@ -64,21 +121,6 @@ class DirectedGraph(Graph):
                 reachable = r
         return best
 
-    def source_choices(self, min_reachable=150):
-        choices = set()
-        for n in self.graph.nodes:
-            if len(self.distances[n].keys()) >= min_reachable:
-                choices.add(n)
-        return choices
-
-    def select_source(self, min_reachable=150):
-        choices = self.source_choices(min_reachable)
-        if len(choices) == 0:
-            self.source = self.select_best_source()
-        else:
-            self.source = random.sample(choices, 1)[0]
-        return self.source
-
     def source_candidates(self, x):
         gs = self.graph.subgraph(x)
         sub_distances = {}
@@ -86,7 +128,7 @@ class DirectedGraph(Graph):
             sub_distances[d[0]] = d[1]
         candidates = []
         for n in x:
-            if n in sub_distances.keys() and len((set(x) - set(sub_distances[n].keys())) - set([n])) == 0:
+            if n in sub_distances.keys() and len(set(x) - set(sub_distances[n].keys()) - set([n])) == 0:
                 candidates += [n]
 
         return candidates
@@ -103,8 +145,6 @@ class WeightedGraph(Graph):
         infected = set([s])
         infection_order = [s]
         for _ in range(1, T):
-            if len(edges) == 0:
-                break
             weights = np.array([e[2]["weight"] for e in edges])
             jump_index = np.random.choice(list(range(len(edges))), 1, p=weights/sum(weights))[0]
             jump = edges[jump_index]
@@ -118,94 +158,6 @@ class WeightedGraph(Graph):
                     edges += [e]
             edges = [e for e in edges if not (e[0] in infected and e[1] in infected)]
         return infected, infection_order
-
-class IntegerWeightedGraph(Graph):
-    def __init__(self, N):
-        super().__init__(N)
-
-    def sample(self, s, T):
-        edges = set()
-        for n in self.neighbors[s]:
-            edges.add((s, n))
-        infected = set([s])
-        infection_order = [s]
-        for _ in range(1, T):
-            jump = random.sample(edges, 1)[0]
-            infected.add(jump[1])
-            infection_order.append(jump[1])
-            for n in self.neighbors[jump[1]]:
-                if n in infected:
-                    while (n, jump[1]) in edges:
-                        edges.discard((n, jump[1]))
-                else:
-                    for __ in range(int(self.graph[jump[1]][n]["weight"])):
-                        edges.add((jump[1], n))
-        return infected, infection_order
-
-class GeneralGraph(Graph):
-    def __init__(self, N):
-        super().__init__(N)
-
-    def sample(self, s, T):
-        edges = list()
-        weights = list()
-        for e in self.graph.edges(s, data=True):
-            edges += [e]
-        infected = set([s])
-        infection_order = [s]
-        for _ in range(1, T):
-            if len(edges) == 0:
-                break
-            weights = np.array([e[2]["weight"] for e in edges])
-            jump_index = np.random.choice(list(range(len(edges))), 1, p=weights/sum(weights))[0]
-            jump = edges[jump_index]
-            infected.add(jump[1])
-            infection_order.append(jump[1])
-            for e in self.graph.edges(jump[1], data=True):
-                end = e[0]
-                if e[0] == jump[1]:
-                    end = e[1]
-                if not end in infected:
-                    edges += [e]
-            edges = [e for e in edges if not (e[0] in infected and e[1] in infected)]
-        return infected, infection_order
-
-    def select_best_source(self):
-        best = -1
-        reachable = -1
-        for n in self.graph.nodes:
-            r = len(self.distances[n].keys())
-            if r > reachable:
-                best = n
-                reachable = r
-        return best
-
-    def source_choices(self, min_reachable=150):
-        choices = set()
-        for n in self.graph.nodes:
-            if len(self.distances[n].keys()) >= min_reachable:
-                choices.add(n)
-        return choices
-
-    def select_source(self, min_reachable=150):
-        choices = self.source_choices(min_reachable)
-        if len(choices) == 0:
-            self.source = self.select_best_source()
-        else:
-            self.source = random.sample(choices, 1)[0]
-        return self.source
-
-    def source_candidates(self, x):
-        gs = self.graph.subgraph(x)
-        sub_distances = {}
-        for d in nx.all_pairs_shortest_path_length(gs):
-            sub_distances[d[0]] = d[1]
-        candidates = []
-        for n in x:
-            if n in sub_distances.keys() and len((set(x) - set(sub_distances[n].keys())) - set([n])) == 0:
-                candidates += [n]
-
-        return candidates
 
 class RegularTree(Graph):
     def __init__(self, N, degree, height):
@@ -339,36 +291,10 @@ class FromAdjacency(Graph):
         self.graph = nx.from_numpy_matrix(A)
         super().__init__(N)
 
-class DirectedFromAdjacency(DirectedGraph):
-    def __init__(self, E):
-        self.graph = nx.from_edgelist(E, create_using=nx.DiGraph)
-        super().__init__(len(self.graph))
-
 class EdgeList(Graph):
     def __init__(self, fname):
         self.graph = nx.readwrite.edgelist.read_edgelist(fname, delimiter=',', nodetype=int)
         super().__init__(self.graph.number_of_nodes(), False)
-
-class DirectedAdjacency(DirectedGraph):
-    def __init__(self, fname):
-        df = pd.read_csv(fname, sep=' ')
-        mat = df.to_numpy()
-        self.graph = nx.convert_matrix.from_numpy_matrix(mat, create_using=nx.DiGraph)
-        super().__init__(self.graph.number_of_nodes())
-
-class WeightedAdjacency(WeightedGraph):
-    def __init__(self, fname):
-        df = pd.read_csv(fname, sep=' ')
-        mat = df.to_numpy()
-        self.graph = nx.convert_matrix.from_numpy_matrix(mat, create_using=nx.Graph)
-        super().__init__(self.graph.number_of_nodes())
-
-class GeneralAdjacency(GeneralGraph):
-    def __init__(self, fname):
-        df = pd.read_csv(fname, sep=' ')
-        mat = df.to_numpy()
-        self.graph = nx.convert_matrix.from_numpy_matrix(mat, create_using=nx.DiGraph)
-        super().__init__(self.graph.number_of_nodes())
 
 class PyEdgeList(Graph):
     def __init__(self, edges):
@@ -391,12 +317,6 @@ class WeightedCopy(WeightedGraph):
         self.graph = G
         super().__init__(len(G))
 
-
-class IntegerWeightedCopy(IntegerWeightedGraph):
-    def __init__(self, G):
-        self.graph = G
-        super().__init__(len(G))
-
 class DirectedCopy(DirectedGraph):
     def __init__(self, G):
         self.graph = G.graph.to_directed()
@@ -406,13 +326,6 @@ def addRandomWeights(G, a):
     graph = G.graph
     for (u, v, w) in graph.edges(data=True):
         w['weight'] = powerlaw.rvs(a, 1)
-
-    return WeightedCopy(graph)
-
-def addUniformWeights(G, a):
-    graph = G.graph
-    for (u, v, w) in graph.edges(data=True):
-        w['weight'] = powerlaw.rvs(1, a, 1)
 
     return WeightedCopy(graph)
 
