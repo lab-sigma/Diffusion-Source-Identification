@@ -7,15 +7,29 @@ import pandas as pd
 import random
 import time
 import copy
+import pickle
+import warnings
 
 from scipy.sparse.linalg import eigsh
 from scipy import sparse
 
 from isomorphisms import general_iso, compile_permutations
 from display import display_infected
+from discrepancies import L2_h
 
 from abc import ABC
 
+def save_model(I, s, x, name):
+    pickle.dump((I, s, x), open("saved/" + name + ".p", "wb"))
+
+def load_model(name):
+    return pickle.load(open("saved/" + name + ".p", "rb"))
+
+# Conditionally expand element
+def cexpand(d, l):
+    if not hasattr(d, "__len__"):
+        return [d for _ in range(l)]
+    return d
 
 """
     Infection model abstract base class; defines same confidence set computation structure for each type
@@ -26,17 +40,29 @@ class InfectionModelBase(ABC):
         self.losses = discrepancies
         self.results = {}
         self.current = None
-        if not hasattr(discrepancies, "__len__"):
-            self.losses = [discrepancies]
-        else:
-            self.losses = discrepancies
+        self.losses = cexpand(discrepancies, 1)
         if discrepancy_names is None:
             self.loss_names = [l.__name__ for l in self.losses]
         else:
-            if not hasattr(discrepancy_names, "__len__"):
-                self.loss_names = [discrepancy_names]
-            else:
-                self.loss_names = discrepancy_names
+            self.loss_names = cexpand(discrepancy_names, 1)
+
+    def store_results(self, fname):
+        pickle.dump(self.results, open(fname, "wb"))
+
+    def load_results(self, fname, append=True):
+        results = pickle.load(open(fname, "rb"))
+        if append:
+            for t, r in results.items():
+                if t in self.results:
+                    warnings.warn("Added result timestamp {} already exists and was overwritten".format(t))
+                self.results[t] = r
+        else:
+            self.results = results
+
+    def add_discrepancy(self, disc, name=None):
+        self.losses.append(disc)
+        if name is None:
+            self.loss_names.append(disc.__name__)
 
     def create_groupings(self):
         pass
@@ -57,11 +83,14 @@ class InfectionModelBase(ABC):
         self.source = random.sample(set(self.G.graph.nodes()), 1)[0]
         return self.source
 
-    def p_values(self, x):
+    def p_values(self, x, meta=None):
         results = {
             "p_vals": {},
             "mu_x": {}
         }
+
+        if not meta is None:
+            results["meta"] = meta
 
         groupings, permutations = self.create_groupings(x)
 
@@ -89,26 +118,35 @@ class InfectionModelBase(ABC):
 
         return results
 
-    def confidence_set(self, x, alpha, new_run=True):
+    def confidence_set(self, x, alpha, new_run=True, meta=None, full=False):
         if new_run:
-            results = self.p_values(x)
+            new_results = self.p_values(x, meta)
         else:
             if self.current is None:
                 raise RuntimeError('Requested confidence set based on previous run with empty history.')
-            results = self.results[self.current]
+            new_results = self.results[self.current]
 
-        p_vals = results["p_vals"]
+        def csets(results):
+            p_vals = results["p_vals"]
 
-        C_sets = {}
-        for l_name in self.loss_names:
-            C_sets[l_name] = set()
+            C_sets = {}
+            for l_name in self.loss_names:
+                C_sets[l_name] = set()
 
-        for si, p in p_vals.items():
-            for i, l_name in enumerate(self.loss_names):
-                if p[i] > alpha:
-                    C_sets[l_name].add(si)
+            for si, p in p_vals.items():
+                for i, l_name in enumerate(self.loss_names):
+                    if p[i] > alpha:
+                        C_sets[l_name].add(si)
 
-        return C_sets
+            return C_sets
+
+        if full:
+            full_C = {}
+            for t, r in self.results:
+                full_C[t] = csets(r)
+            return full_C
+
+        return csets(new_results)
 
 
 ##########################################################################################################
@@ -119,13 +157,24 @@ class InfectionModelBase(ABC):
     Fixed infection size (T) Susceptible-Infected (SI) model; Model used in work presented at ICML 2021
 """
 class FixedTSI(InfectionModelBase):
-    def __init__(self, G, discrepancies, discrepancy_names=None, m=1000, T=150, iso=True, k_iso=10, d1=True):
+    def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
+            expectation_after=False, m=1000, T=150, iso=True, k_iso=10, d1=True):
+
         self.iso = iso
         self.k_iso = k_iso
         self.d1 = d1
         self.T = T
         self.m = m
+
+        self.canonical = cexpand(canonical, len(discrepancies))
+        self.expectation_after = cexpand(expectation_after, len(discrepancies))
+
         super().__init__(G, discrepancies, discrepancy_names)
+
+    def add_discrepancy(self, disc, name=None, canonical=True, expectation_after=False):
+        self.canonical.append(canonical)
+        self.expectation_after.append(expectation_after)
+        super().add_discrepancy(disc, name)
 
     def create_groupings(self, x):
         groupings = list()
@@ -167,7 +216,6 @@ class FixedTSI(InfectionModelBase):
 
         return groupings, permutations
 
-
     def sample_prep(self, s, leader, samples, permutations, dependencies):
         if (s, leader) in permutations:
             permutation = permutations[(s, leader)]
@@ -197,25 +245,13 @@ class FixedTSI(InfectionModelBase):
     def sample(self, s, dependents):
         return [self.single_sample(s) for i in range(2*self.m)]
 
-    def compute_p_vals(self, x, samples, ratios=None):
-        if ratios is None:
-            ratios = [1 for _ in range(len(samples))]
-
-        losses = []
-        for loss in self.losses:
-            samples_vals = self.node_vals(loss, samples[:self.m], ratios[:self.m])
-            mu_x = self.temporal_loss(x, samples_vals)
-            psi = sum([ratio*(self.temporal_loss(yi, samples_vals) >= mu_x) for yi, ratio in zip(samples[self.m:], ratios[self.m:])])/(self.m)
-            losses += [(mu_x, psi)]
-        return losses
-
     def node_vals(self, h_t, samples, ratios):
         vals = {}
         for sample, ratio in zip(samples, ratios):
             for v in sample.keys():
                 if not v in vals.keys():
                     vals[v] = 0
-                vals[v] += ratio * h_t(sample[v][1], self.T)
+                vals[v] += ratio * h_t(sample[v][0], self.T)
         return vals
 
     def temporal_loss(self, x, vals):
@@ -224,6 +260,29 @@ class FixedTSI(InfectionModelBase):
             if x_i in vals.keys():
                 Tx += vals[x_i]
         return -Tx
+
+    def compute_p_vals(self, x, samples, ratios=None):
+        if ratios is None:
+            ratios = [1 for _ in range(len(samples))]
+
+        losses = []
+        for loss, canonical, expectation_after in zip(self.losses, self.canonical, self.expectation_after):
+            if canonical or expectation_after:
+                if expectation_after:
+                    cf = lambda x, T: 1/self.m
+                    lf = loss
+                else:
+                    cf = loss
+                    lf = self.temporal_loss
+
+                samples_vals = self.node_vals(cf, samples[:self.m], ratios[:self.m])
+                mu_x = lf(x, samples_vals)
+                psi = sum([ratio*(lf(yi, samples_vals) >= mu_x) for yi, ratio in zip(samples[self.m:], ratios[self.m:])])/(self.m)
+            else:
+                mu_x = loss(G, x, samples[:self.m], ratios[:self.m], s)
+                psi = sum([loss(G, yi, samples[:self.m], s) >= mu_x for yi in samples[self.m:]])/self.m
+            losses += [(mu_x, psi)]
+        return losses
 
     def compute_ratios(self, samples, sp, permutations):
         sample_ratios = list()
@@ -235,27 +294,6 @@ class FixedTSI(InfectionModelBase):
             sp_index = samples[i][sp][0]
             for v in samples[i]:
                 if samples[i][v][0] < sp_index-1:
-                    if samples[i][v][1] == 1:
-                        print(permutations)
-                        print(samples[i])
-                        print(sp)
-                        print(v)
-                        print(sp_index)
-
-                        A = nx.adjacency_matrix(self.G.graph, weight=None)
-                        A = A.asfptype()
-                        D, U = eigsh(A, k=A.shape[0]-1)
-                        roundD = np.around(D, 8)
-                        Dc = Counter(roundD)
-                        keep = []
-                        for j in range(len(D)):
-                            if Dc[roundD[j]] == 1:
-                                keep += [j]
-
-                        U = np.array(U)[:, np.array(keep)]
-                        print(U)
-                        print(D)
-                        display_infected(self.G, samples[i], sp)
                     ratio *= 1/(1 - 1/samples[i][v][1])
                     samples[i][v][0] += 1
                 elif samples[i][v][0] == sp_index-1:
@@ -282,7 +320,7 @@ class FixedTSI(InfectionModelBase):
         return infected
 
     def data_gen(self, s):
-        return self.single_sample(s).keys()
+        return set(iter(self.single_sample(s).keys()))
 
     def select_source(self, seed=None):
         if seed is not None:
@@ -302,8 +340,9 @@ class FixedTSI(InfectionModelBase):
     FixedTSI with weighted sampling
 """
 class FixedTSI_Weighted(FixedTSI):
-    def __init__(self, G, discrepancies, discrepancy_names=None, m=1000, T=150):
-        super().__init__(self, G, discrepancies, discrepancy_names, m, T, iso=False, k_iso=10, d1=False)
+    def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
+            expectation_after=False, m=1000, T=150):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
 
     def single_sample(self, s):
         edges = list()
@@ -332,25 +371,26 @@ class FixedTSI_Weighted(FixedTSI):
 """
     FixedTSI with weighted sampling and integer weights
 """
-class FixedTSI_IntegerWeighted(FixedTSI):
-    def __init__(self, G, discrepancies, discrepancy_names=None, m=1000, T=150):
-        super().__init__(self, G, discrepancies, discrepancy_names, m, T, iso=False, k_iso=10, d1=False)
+class FixedTSI_IW(FixedTSI):
+    def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
+            expectation_after=False, m=1000, T=150):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
 
     def single_sample(self, s):
         edges = set()
-        for n in self.neighbors[s]:
+        for n in self.G.neighbors[s]:
             for i in range(int(self.G.graph[s][n]["weight"])):
                 edges.add((s, n, i))
         infected = {}
         infected[s] = [1]
-        for i in range(1, T):
+        for i in range(1, self.T):
             jump = random.sample(edges, 1)[0]
             infected[jump[1]] = [i+1]
-            for n in self.neighbors[jump[1]]:
+            for n in self.G.neighbors[jump[1]]:
                 if n in infected:
-                    for j in range(int(self.graph[jump[1]][n]["weight"])):
+                    for j in range(int(self.G.graph[jump[1]][n]["weight"])):
                         edges.discard((n, jump[1], j))
                 else:
-                    for j in range(int(self.graph[jump[1]][n]["weight"])):
+                    for j in range(int(self.G.graph[jump[1]][n]["weight"])):
                         edges.add((jump[1], n, j))
-        return infected, infection_order
+        return infected

@@ -17,6 +17,20 @@ def ADiT2_h(t_z, T):
 
 ################################
 
+def L2_after(x, vals):
+    Tx = 0
+    for x_i in x:
+        if x_i in vals:
+            Tx += (1-vals[x_i])**2
+        else:
+            Tx += 1
+    for v_i in vals:
+        if not v_i in x:
+            Tx += (vals[v_i])**2
+    return Tx
+
+################################
+
 def L2(G, x, Y, s):
     return len(x ^ Y)
 
@@ -95,3 +109,8 @@ def max_dist(G, x, samples, s):
     return max([G.dist(i, s) for i in x])
 
 ##############################################################
+
+def loss_creator(loss_func):
+    def loss_wrapper(G, x, samples_Y, ratios, s):
+        return sum([loss_func(G, x, Y, s)*ratio for Y, ratio in zip(samples_Y, ratios)])
+    return loss_wrapper
