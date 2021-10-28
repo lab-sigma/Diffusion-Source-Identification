@@ -75,7 +75,7 @@ class InfectionModelBase(ABC):
     def sample(self, s, dependencies):
         pass
 
-    def compute_p_vals(self, x, samples_p, ratios):
+    def compute_p_vals(self, x, s, samples_p, ratios):
         pass
 
     def data_gen(self, s):
@@ -107,7 +107,7 @@ class InfectionModelBase(ABC):
                 else:
                     sg = [sg]
                 samples_p, ratios = self.sample_prep(s, leader, samples, permutations, dependencies)
-                losses = self.compute_p_vals(x, samples_p, ratios)
+                losses = self.compute_p_vals(x, s, samples_p, ratios)
                 for si in sg:
                     results["p_vals"][si] = []
                     results["mu_x"][si] = []
@@ -255,18 +255,18 @@ class FixedTSI(InfectionModelBase):
     def precompute_probabilities(self, s, m_p=None):
         if m_p is None:
             m_p = self.m
-        ps = [self.single_sample(s) for i in range(m_p)]
+        samples = [self.single_sample(s) for i in range(m_p)]
         cf = lambda x, T: 1/m_p
         probabilities = self.node_vals(cf, samples, [1 for _ in range(m_p)])
         self.probabilities[s] = (probabilities, m_p)
 
     def include_probabilities(self, I):
-        for s, probs, m_r in I.items():
+        for s, (probs, m_r) in I.probabilities.items():
             if s in self.probabilities:
                 np, m_p = self.probabilities[s]
             else:
                 np, m_p = {}, 0
-            for v in set(probs.items()).union(set(np.items())):
+            for v in set(probs.keys()).union(set(np.keys())):
                 if not v in np:
                     np[v] = probs[v]*m_r/(m_r+m_p)
                 if not v in probs:
@@ -292,7 +292,7 @@ class FixedTSI(InfectionModelBase):
                 Tx += vals[x_i]
         return -Tx
 
-    def compute_p_vals(self, x, samples, ratios=None):
+    def compute_p_vals(self, x, s, samples, ratios=None):
         if ratios is None:
             ratios = [1 for _ in range(len(samples))]
 
