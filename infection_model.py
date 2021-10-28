@@ -56,6 +56,9 @@ class InfectionModelBase(ABC):
                 if t in self.results:
                     warnings.warn("Added result timestamp {} already exists and was overwritten".format(t))
                 self.results[t] = r
+                if self.current is None:
+                    self.current = t
+                self.current = max(self.current, t)
         else:
             self.results = results
 
@@ -135,14 +138,15 @@ class InfectionModelBase(ABC):
 
             for si, p in p_vals.items():
                 for i, l_name in enumerate(self.loss_names):
-                    if p[i] > alpha:
+                    print(p[i])
+                    if p[i] >= alpha:
                         C_sets[l_name].add(si)
 
             return C_sets
 
         if full:
             full_C = {}
-            for t, r in self.results:
+            for t, r in self.results.items():
                 full_C[t] = csets(r)
             return full_C
 
