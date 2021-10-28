@@ -170,6 +170,8 @@ class FixedTSI(InfectionModelBase):
         self.T = T
         self.m = m
 
+        self.probabilities = {}
+
         self.canonical = cexpand(canonical, len(discrepancies))
         self.expectation_after = cexpand(expectation_after, len(discrepancies))
 
@@ -247,7 +249,32 @@ class FixedTSI(InfectionModelBase):
         return samples, [1 for _ in range(len(samples))]
 
     def sample(self, s, dependents):
-        return [self.single_sample(s) for i in range(2*self.m)]
+        m = 2*self.m
+        if s in self.probabilities and all(self.expectation_after):
+            m = self.m
+        return [self.single_sample(s) for i in range(m)]
+
+    def precompute_probabilities(self, s, m_p=self.m):
+        ps = [self.single_sample(s) for i in range(m_p)]
+        cf = lambda x, T: 1/m_p
+        probabilities = self.node_vals(cf, samples, [1 for _ in range(m_p)])
+        self.probabilities[s] = (probabilities, m_p)
+
+    def include_probabilities(self, I):
+        for s, probs, m_r in I.items():
+            if s in self.probabilities:
+                np, m_p = self.probabilities[s]
+            else:
+                np, m_p = {}, 0
+            for v in set(probs.items()).union(set(np.items())):
+                if not v in np:
+                    np[v] = probs[v]*m_r/(m_r+m_p)
+                if not v in probs:
+                    np[v] = np[v]*m_p/(m_r+m_p)
+                else:
+                    np[v] = (np[v]*m_p + probs[v]*m_r)/(m_r+m_p)
+            self.probabilities[s] = (np, m_r+m_p)
+
 
     def node_vals(self, h_t, samples, ratios):
         vals = {}
@@ -273,15 +300,18 @@ class FixedTSI(InfectionModelBase):
         for loss, canonical, expectation_after in zip(self.losses, self.canonical, self.expectation_after):
             if canonical or expectation_after:
                 if expectation_after:
-                    cf = lambda x, T: 1/self.m
                     lf = loss
+                    if s in self.probabilities:
+                        samples_vals = self.probabilities[s][0]
+                    else:
+                        cf = lambda x, T: 1/self.m
+                        samples_vals = self.node_vals(cf, samples[self.m:], ratios[self.m:])
                 else:
-                    cf = loss
                     lf = self.temporal_loss
+                    samples_vals = self.node_vals(loss, samples[self.m:], ratios[self.m:])
 
-                samples_vals = self.node_vals(cf, samples[:self.m], ratios[:self.m])
                 mu_x = lf(x, samples_vals)
-                psi = sum([ratio*(lf(yi, samples_vals) >= mu_x) for yi, ratio in zip(samples[self.m:], ratios[self.m:])])/(self.m)
+                psi = sum([ratio*(lf(yi, samples_vals) >= mu_x) for yi, ratio in zip(samples[:self.m], ratios[:self.m])])/(self.m)
             else:
                 mu_x = loss(G, x, samples[:self.m], ratios[:self.m], s)
                 psi = sum([loss(G, yi, samples[:self.m], s) >= mu_x for yi in samples[self.m:]])/self.m
