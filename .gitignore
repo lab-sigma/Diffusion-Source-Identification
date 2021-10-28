@@ -1,6 +1,5 @@
-rumor
-__pycache__
-*.pdf
+dsivenv
+__pycache__/
 results
 saved
 data

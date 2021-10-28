@@ -1,12 +1,12 @@
-from infection_model import FixedTSI
-from graphs import RegularTree
-from discrepancies import L2_h
+from diffusion_source.infection_model import FixedTSI
+from diffusion_source.graphs import RegularTree
+from diffusion_source.discrepancies import L2_h
 
-G = RegularTree(300, 4, 4)
+G = RegularTree(300, 4)
 
 I = FixedTSI(G, L2_h, T=10, m=100)
 
-K = 10000
+K = 100
 C = 0
 for k in range(K):
     source = I.select_uniform_source()
@@ -20,4 +20,4 @@ for k in range(K):
 print()
 print()
 
-print(C/10000)
+print(C/K)

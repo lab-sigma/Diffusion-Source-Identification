@@ -2,8 +2,8 @@ from os import listdir
 from os.path import isfile, join
 import pandas as pd
 
-from discrepancies import L2_h, L2_after
-from infection_model import load_model
+from diffusion_source.discrepancies import L2_h, L2_after
+from diffusion_source.infection_model import load_model
 
 
 

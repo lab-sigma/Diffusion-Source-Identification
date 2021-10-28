@@ -208,10 +208,9 @@ class GeneralGraph(Graph):
         return candidates
 
 class RegularTree(Graph):
-    def __init__(self, N, degree, height):
+    def __init__(self, N, degree):
         assert(N > degree)
         self.degree = degree
-        #self.graph = nx.balanced_tree(degree, height)
         self.graph = nx.Graph()
         neighbors = list(range(1, self.degree+1))
         self.graph.add_node(0)

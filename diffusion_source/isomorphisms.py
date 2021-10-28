@@ -1,7 +1,7 @@
-import graphs
+import diffusion_source.graphs
+
 import time
 from collections import Counter
-import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import math
@@ -148,7 +148,6 @@ def first_order_iso(G, x):
                         Vn = list(G.graph.neighbors(v))
                         if u in Vn:
                             Vn.remove(u)
-                        #print(len(Vn))
                         for p in itertools.permutations(Vn):
                             works = True
                             for i in range(len(Un)):
@@ -170,16 +169,6 @@ def first_order_iso_spectral(G, x):
     A = nx.adjacency_matrix(G.graph, weight=None)
     A = A.asfptype()
     D, U = eigsh(A, k=2)
-    #print(U)
-    #for i in range(17):
-    #    print(U[i])
-    #print()
-    #print(D)
-    #quit()
-
-    #for i in range(6):
-    #    print()
-    #    print("{}, val: {}, vec: ".format(i, D[i]), U[i])
 
     L = set()
     checked = set()
@@ -192,25 +181,6 @@ def first_order_iso_spectral(G, x):
             if np.allclose(U[xi], U[xj], 1e-10, 1e-10) or np.allclose(U[xi], -U[xj], 1e-10, 1e-10):
                 L.add((xi, xj))
 
-    #print("runtime1: ", time.time() - start)
-
-    #start = time.time()
-    #P = first_order_iso(G, x)
-
-    #print("runtime2: ", time.time() - start)
-
-    #for p in P:
-    #    print(U[p[0]])
-    #    print(U[p[1]])
-    #    print([i - j for i, j in zip(U[p[0]], U[p[1]])])
-    #    print(np.allclose(U[p[0]], U[p[1]]) or np.allclose(U[p[0]], U[p[1]]))
-    #    print()
-    #print(iso_groups(L))
-    #print(iso_groups(P))
-    #print(L - P)
-    #print(P - L)
-    #print(len(L))
-    #print(len(P))
     return L
 
 def distance_matching(neu, nev, U, P, swap):

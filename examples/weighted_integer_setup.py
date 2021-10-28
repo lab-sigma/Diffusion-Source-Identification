@@ -1,6 +1,6 @@
-import graphs
-from infection_model import save_model, FixedTSI_IW
-from discrepancies import L2_h, L2_after
+import diffusion_source.graphs
+from diffusion_source.infection_model import save_model, FixedTSI_IW
+from diffusions_source.discrepancies import L2_h, L2_after
 
 files = [
     "data/GlobalAirportTraffic/AirportFlightTraffic.txt",

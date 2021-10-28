@@ -1,7 +1,7 @@
 import sys
 
-import graphs
-from infection_model import load_model
+import diffusion_source.graphs
+from diffusion_source.infection_model import load_model
 
 files = [
     "data/GlobalAirportTraffic/AirportFlightTraffic.txt",

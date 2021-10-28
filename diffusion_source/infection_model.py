@@ -3,7 +3,6 @@ import numpy as np
 from scipy.stats import powerlaw
 from scipy.stats import uniform
 from collections import Counter
-import pandas as pd
 import random
 import time
 import copy
@@ -13,9 +12,9 @@ import warnings
 from scipy.sparse.linalg import eigsh
 from scipy import sparse
 
-from isomorphisms import general_iso, compile_permutations
-from display import display_infected
-from discrepancies import L2_h
+from diffusion_source.isomorphisms import general_iso, compile_permutations
+from diffusion_source.display import display_infected
+from diffusion_source.discrepancies import L2_h
 
 from abc import ABC
 
@@ -138,7 +137,6 @@ class InfectionModelBase(ABC):
 
             for si, p in p_vals.items():
                 for i, l_name in enumerate(self.loss_names):
-                    print(p[i])
                     if p[i] >= alpha:
                         C_sets[l_name].add(si)
 
@@ -172,10 +170,10 @@ class FixedTSI(InfectionModelBase):
 
         self.probabilities = {}
 
-        self.canonical = cexpand(canonical, len(discrepancies))
-        self.expectation_after = cexpand(expectation_after, len(discrepancies))
-
         super().__init__(G, discrepancies, discrepancy_names)
+
+        self.canonical = cexpand(canonical, len(self.losses))
+        self.expectation_after = cexpand(expectation_after, len(self.losses))
 
     def add_discrepancy(self, disc, name=None, canonical=True, expectation_after=False):
         self.canonical.append(canonical)
@@ -254,7 +252,9 @@ class FixedTSI(InfectionModelBase):
             m = self.m
         return [self.single_sample(s) for i in range(m)]
 
-    def precompute_probabilities(self, s, m_p=self.m):
+    def precompute_probabilities(self, s, m_p=None):
+        if m_p is None:
+            m_p = self.m
         ps = [self.single_sample(s) for i in range(m_p)]
         cf = lambda x, T: 1/m_p
         probabilities = self.node_vals(cf, samples, [1 for _ in range(m_p)])
