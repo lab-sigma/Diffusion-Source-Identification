@@ -1,4 +1,4 @@
-import diffusion_source.graphs
+import diffusion_source.graphs as graphs
 
 import time
 from collections import Counter

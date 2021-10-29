@@ -1,4 +1,4 @@
-import diffusion_source.graphs
+import diffusion_source.graphs as graphs
 from diffusion_source.infection_model import save_model, FixedTSI_IW
 from diffusion_source.discrepancies import L2_h, L2_after
 
