@@ -13,8 +13,8 @@ files = [
 ]
 
 names = [
-    "AFT",
-    "SatisticianCitations",
+    "AirportFlightTraffic",
+    "StatisticianCitations",
     "BSchoolHiring",
     "ComputerScienceHiring",
     "HistoryHiring",
@@ -36,4 +36,4 @@ m_p = 1000
 for s in list(I.G.graph.nodes):
     I.precompute_probabilities(s, m_p)
 
-I.save_model(I, s, x, "{}_{}".format(name, model_id))
+save_model(I, s, x, "{}_{}".format(name, model_id))

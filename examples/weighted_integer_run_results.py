@@ -19,8 +19,8 @@ files = [
 ]
 
 names = [
-    "AFT",
-    "SatisticianCitations",
+    "AirportFlightTraffic",
+    "StatisticianCitations",
     "BSchoolHiring",
     "ComputerScienceHiring",
     "HistoryHiring",
