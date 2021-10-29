@@ -34,6 +34,6 @@ I, s, x = load_model(name)
 m_p = 1000
 
 for s in list(I.G.graph.nodes):
-    I.precompute_probabilities(self, s, m_p)
+    I.precompute_probabilities(s, m_p)
 
 I.save_model(I, s, x, "{}_{}".format(name, model_id))
