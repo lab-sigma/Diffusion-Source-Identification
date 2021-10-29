@@ -428,3 +428,4 @@ class FixedTSI_IW(FixedTSI):
                     for j in range(int(self.G.graph[jump[1]][n]["weight"])):
                         edges.add((jump[1], n, j))
         return infected
+
