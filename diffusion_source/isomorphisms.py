@@ -200,7 +200,32 @@ def distance_matching(neu, nev, U, P, swap):
             if np.allclose(swap*Uu/np.linalg.norm(Uu), U[v]/np.linalg.norm(U[v]), 1e-10, 1e-10):
                 nevc.remove(v)
                 passed = True
-                #P[[u, v]] = P[[v, u]]
+                P[u] = v
+                P[v] = u
+                break
+
+        if not passed:
+            return False, P
+
+    return True, P
+
+def distance_matching_stationary(neu, nev, U, P, swap):
+    if not len(neu) == len(nev):
+        return False, P
+
+    nevc = nev.copy()
+
+    for u in neu:
+        Uu = U[u]
+        passed = False
+        if u in P:
+            continue
+        for v in nevc:
+            if v in P:
+                continue
+            if np.isclose(Uu, U[v]):
+                nevc.remove(v)
+                passed = True
                 P[u] = v
                 P[v] = u
                 break
@@ -286,6 +311,57 @@ def general_iso(G, x, K):
                 nev = v_new
 
                 s, P = distance_matching(neu, nev, U, P, swap)
+                if not s:
+                    break
+
+            #if (A != A @ P).nnz == 0:
+            if not (u, v) in L and check_permutation(G, P):
+                L.append((u, v, P))
+
+    return L
+
+def general_iso_stationary(G, x, K):
+    start = time.time()
+    A = nx.adjacency_matrix(G.graph, weight=None)
+    A = A.asfptype()
+    A = A/A.sum(axis=1)[:,None]
+
+    evals, evecs = np.linalg.eig(Q.T)
+    U = evecs[:, np.isclose(evals, 1)]
+
+    U = U[:,0]
+    U = U/U.sum()
+
+    L = list()
+    checked = set()
+    for u in x:
+        checked.add(u)
+        for v in x:
+            if v in checked:
+                continue
+            if not np.isclose(U[u], U[v]):
+                continue
+
+            #P = sparse.lil_matrix(np.eye(len(G.graph)))
+            P = {}
+            P[u] = v
+            P[v] = u
+            #P[[u, v]] = P[[v, u]]
+
+            neu = set([u])
+            nev = set([v])
+
+            for k in range(K):
+                #if (A != A @ P).nnz == 0:
+                if check_permutation(G, P):
+                    L.append((u, v, P))
+                    break
+
+                u_new, v_new = neighborhoods(G, neu, nev)
+                neu = u_new
+                nev = v_new
+
+                s, P = distance_matching_stationary(neu, nev, U, P, swap)
                 if not s:
                     break
 

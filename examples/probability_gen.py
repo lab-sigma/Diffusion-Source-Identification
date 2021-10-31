@@ -36,4 +36,4 @@ m_p = 1000
 for s in list(I.G.graph.nodes):
     I.precompute_probabilities(s, m_p)
 
-save_model(I, s, x, "{}_{}".format(name, model_id))
+I.store_probabilities("probs/{}_{}.p".format(name, model_id))

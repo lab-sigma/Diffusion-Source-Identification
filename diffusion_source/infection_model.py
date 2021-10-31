@@ -275,6 +275,8 @@ class FixedTSI(InfectionModelBase):
                     np[v] = (np[v]*m_p + probs[v]*m_r)/(m_r+m_p)
             self.probabilities[s] = (np, m_r+m_p)
 
+    def store_results(self, fname):
+        pickle.dump(self.probabilities, open(fname, "wb"))
 
     def node_vals(self, h_t, samples, ratios):
         vals = {}
