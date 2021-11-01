@@ -1,4 +1,6 @@
 import sys
+from os import listdir
+from os.path import isfile, join
 
 import diffusion_source.graphs as graphs
 from diffusion_source.infection_model import save_model, load_model
@@ -27,13 +29,14 @@ index = arg % len(names)
 f = files[index]
 name = names[index]
 
-model_id = int(sys.argv[2])
-
 I, s, x = load_model(name)
 
-m_p = 10
+probs_dir = "probs1"
+rfiles1 = [join(probs_dir, f) for f in listdir(probs_dir) if isfile(join(probs_dir, f)) and name in f]
+probs_dir = "probs2"
+rfiles = rfiles1 + [join(probs_dir, f) for f in listdir(probs_dir) if isfile(join(probs_dir, f)) and name in f]
 
-for s in list(I.G.graph.nodes):
-    I.precompute_probabilities(s, m_p)
+for f in rfiles:
+    I.load_probabilities(f)
 
-I.store_probabilities("probs/{}_{}.p".format(name, model_id))
+I.store_probabilities("probs/{}.p".format(name))

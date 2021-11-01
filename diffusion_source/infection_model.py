@@ -260,8 +260,8 @@ class FixedTSI(InfectionModelBase):
         probabilities = self.node_vals(cf, samples, [1 for _ in range(m_p)])
         self.probabilities[s] = (probabilities, m_p)
 
-    def include_probabilities(self, I):
-        for s, (probs, m_r) in I.probabilities.items():
+    def include_probabilities(self, probabilities):
+        for s, (probs, m_r) in probabilities.items():
             if s in self.probabilities:
                 np, m_p = self.probabilities[s]
             else:
@@ -275,7 +275,10 @@ class FixedTSI(InfectionModelBase):
                     np[v] = (np[v]*m_p + probs[v]*m_r)/(m_r+m_p)
             self.probabilities[s] = (np, m_r+m_p)
 
-    def store_results(self, fname):
+    def load_probabilities(self, fname):
+        self.include_probabilities(pickle.load(open(fname, "rb")))
+
+    def store_probabilities(self, fname):
         pickle.dump(self.probabilities, open(fname, "wb"))
 
     def node_vals(self, h_t, samples, ratios):
