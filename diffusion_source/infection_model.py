@@ -85,7 +85,7 @@ class InfectionModelBase(ABC):
         self.source = random.sample(set(self.G.graph.nodes()), 1)[0]
         return self.source
 
-    def p_values(self, x, meta=None):
+    def p_values(self, x, meta=None, s=None):
         results = {
             "p_vals": {},
             "mu_x": {}
@@ -97,6 +97,9 @@ class InfectionModelBase(ABC):
         groupings, permutations = self.create_groupings(x)
 
         for leader, group, dependencies in groupings:
+
+            if not s is None and not s in group:
+                continue
 
             samples = self.sample(leader, dependencies)
 

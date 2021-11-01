@@ -22,13 +22,18 @@ names = [
 ]
 
 arg = (int(sys.argv[1]) - 1)
-index = arg % len(names)
+index = 1
 
 f = files[index]
 name = names[index]
 
 I, s, x = load_model(name)
 
-I.p_values(x, meta=(name, x, s))
-print(I.results)
+I.load_probabilities("probs/{}.p".format(name))
+
+s = I.select_uniform_source()
+x = I.data_gen(s)
+
+I.p_values(x, meta=(name, x, s), s)
+
 I.store_results("results/test/{}_{}.p".format(name, arg+1))
