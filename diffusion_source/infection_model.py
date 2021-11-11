@@ -452,23 +452,85 @@ class FixedTSI_IW(FixedTSI):
 
 
 """
+    Independent Cascades Model with fixed propagation probability
+"""
+class ICM_fp(FixedTSI):
+    def __init__(self, G, discrepancies, p, discrepancy_names=None, canonical=True,
+            expectation_after=False, m=1000, iso=True, k_iso=10):
+        self.p = p
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, -1, iso=iso, k_iso=k_iso, d1=False)
+    def single_sample(self, s):
+        active = set([s])
+        inactive = {}
+        inactive[s] = [1]
+        t = 1
+        while not len(active) == 0:
+            t += 1
+            new_active = set()
+            for a in active:
+                for n in self.G.neighbors[a]:
+                    if n in inactive:
+                        continue
+                    if random.random() < p:
+                        new_active.add(n)
+                        inactive[n] = [t]
+            active = new_active
+        return inactive
+
+"""
     Independent Cascades Model
 """
 class ICM(FixedTSI):
+    def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
+            expectation_after=False, m=1000):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, -1, iso=False, k_iso=10, d1=False)
     def single_sample(self, s):
-        for n in self.G.neighbors[s]:
-            for i in range(int(self.G.graph[s][n]["weight"])):
-                edges.add((s, n, i))
-        infected = {}
-        infected[s] = [1]
-        for i in range(1, self.T):
-            jump = random.sample(edges, 1)[0]
-            infected[jump[1]] = [i+1]
-            for n in self.G.neighbors[jump[1]]:
-                if n in infected:
-                    for j in range(int(self.G.graph[jump[1]][n]["weight"])):
-                        edges.discard((n, jump[1], j))
-                else:
-                    for j in range(int(self.G.graph[jump[1]][n]["weight"])):
-                        edges.add((jump[1], n, j))
-        return infected
+        active = set([s])
+        inactive = {}
+        inactive[s] = [1]
+        t = 1
+        while not len(active) == 0:
+            t += 1
+            new_active = set()
+            for a in active:
+                for n in self.G.neighbors[a]:
+                    if n in inactive:
+                        continue
+                    if random.random() < self.G.graph[a][n]["weight"]:
+                        new_active.add(n)
+                        inactive[n] = [t]
+            active = new_active
+        return inactive
+
+"""
+    Linear Threshold Model
+"""
+class LTM(FixedTSI):
+    def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
+            expectation_after=False, m=1000):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, -1, iso=False, k_iso=10, d1=False)
+    def single_sample(self, s):
+        added = set([s])
+        active = {}
+        active[s] = [1]
+        thresholds = {}
+        t = 1
+        while not len(added) == 0:
+            t += 1
+            newly_added = set()
+            for a in added:
+                for n in self.G.neighbors[a]:
+                    if n in active:
+                        continue
+                    if not n in thresholds:
+                        thresholds[n] = random.random()
+                    influence = 0
+                    for np in self.G.neighbors[n]:
+                        if np in active:
+                            influence += self.G.graph[a][n]["weight"]
+                    if influence >= thresholds[n]:
+                        newly_added.add(n)
+                        active[n] = [t]
+            added = newly_added
+        return active
+
