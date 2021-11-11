@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import sparse
 
 def L2_h(t_z, T):
     return 2
@@ -17,17 +18,12 @@ def ADiT2_h(t_z, T):
 
 ################################
 
-def L2_after(x, vals):
-    Tx = 0
+def L2_after(x, P_full):
+    P = P_full[0]
+    xv = sparse.csr_matrix(P.shape)
     for x_i in x:
-        if x_i in vals:
-            Tx += (1-vals[x_i])**2
-        else:
-            Tx += 1
-    for v_i in vals:
-        if not v_i in x:
-            Tx += (vals[v_i])**2
-    return Tx
+        xv[0, x_i] = 1
+    return sparse.linalg.norm(P - xv)**2
 
 ################################
 

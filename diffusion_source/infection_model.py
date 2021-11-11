@@ -66,7 +66,7 @@ class InfectionModelBase(ABC):
         if name is None:
             self.loss_names.append(disc.__name__)
 
-    def create_groupings(self):
+    def create_groupings(self, x):
         pass
 
     def sample_prep(self, s, leader, samples, permutations, dependencies):
@@ -171,7 +171,8 @@ class FixedTSI(InfectionModelBase):
         self.T = T
         self.m = m
 
-        self.probabilities = {}
+        self.probabilities = [None for _ in range(T+1)]
+        self.m_p = 0
 
         super().__init__(G, discrepancies, discrepancy_names)
 
@@ -255,34 +256,43 @@ class FixedTSI(InfectionModelBase):
             m = self.m
         return [self.single_sample(s) for i in range(m)]
 
-    def precompute_probabilities(self, s, m_p=None):
+    def precompute_probabilities(self, s, m_p=None, time=True, samples=None):
         if m_p is None:
             m_p = self.m
-        samples = [self.single_sample(s) for i in range(m_p)]
-        cf = lambda x, T: 1/m_p
-        probabilities = self.node_vals(cf, samples, [1 for _ in range(m_p)])
-        self.probabilities[s] = (probabilities, m_p)
+        self.m_p = m_p
+        if time:
+            for i in range(1, self.T+1):
+                self.probabilities[i] = sparse.dok_matrix((len(G.graph), len(G.graph)), dtype=np.float32)
+        else:
+            self.probabilities[0] = sparse.dok_matrix((len(G.graph), len(G.graph)), dtype=np.float32)
+        if samples is None:
+            samples = [self.single_sample(s) for i in range(m_p)]
+        for sample in samples:
+            for v, (t, d) in sample.items():
+                self.probabilities[0][s, v] += 1/m_p
+                if time:
+                    self.probabilities[t][s, v] += 1/m_p
+        for i in range(self.T+1):
+            self.probabilities[i] = self.probabilities[i].tocsr()
 
-    def include_probabilities(self, probabilities):
-        for s, (probs, m_r) in probabilities.items():
-            if s in self.probabilities:
-                np, m_p = self.probabilities[s]
-            else:
-                np, m_p = {}, 0
-            for v in set(probs.keys()).union(set(np.keys())):
-                if not v in np:
-                    np[v] = probs[v]*m_r/(m_r+m_p)
-                if not v in probs:
-                    np[v] = np[v]*m_p/(m_r+m_p)
-                else:
-                    np[v] = (np[v]*m_p + probs[v]*m_r)/(m_r+m_p)
-            self.probabilities[s] = (np, m_r+m_p)
+    def include_probabilities(self, probabilities, m_p):
+        for t in range(len(probabilities)):
+            if self.probabilities[t] is None and probabilities[t] is not None:
+                self.probabilities[t] = probabilities[t]*m_p/(self.m_p+m_p)
+            elif probabilities[t] is None and self.probabilities[t] is not None:
+                self.probabilities[t] = self.probabilities[t]*self.m_p/(self.m_p+m_p)
+            elif probabilities[t] is not None and self.probabilities[t] is not None:
+                self.probabilities[t] = (probabilities[t]*m_p + self.probabilities[t]*self.m_p)/(self.m_p+m_p)
+        self.m_p += m_p
 
     def load_probabilities(self, fname):
-        self.include_probabilities(pickle.load(open(fname, "rb")))
+        m_p, probs = pickle.load(open(fname, "rb"))
+        for i in range(len(probs)):
+            probs[i] = probs[i].tocsr()
+        self.include_probabilities(m_p, probs)
 
     def store_probabilities(self, fname):
-        pickle.dump(self.probabilities, open(fname, "wb"))
+        pickle.dump((self.m_p, self.probabilities), open(fname, "wb"))
 
     def node_vals(self, h_t, samples, ratios):
         vals = {}
@@ -309,11 +319,14 @@ class FixedTSI(InfectionModelBase):
             if canonical or expectation_after:
                 if expectation_after:
                     lf = loss
-                    if s in self.probabilities:
-                        samples_vals = self.probabilities[s][0]
-                    else:
-                        cf = lambda x, T: 1/self.m
-                        samples_vals = self.node_vals(cf, samples[self.m:], ratios[self.m:])
+                    if not s in self.probabilities:
+                        self.precompute_probabilities(s, samples=samples[self.m:])
+                    samples_vals = list()
+                    for i in range(len(self.probabilities)):
+                        p_s = None
+                        if self.probabilities[i] is not None:
+                            p_s = self.probabilities[i].getrow(s)
+                        samples_vals.append(p_s)
                 else:
                     lf = self.temporal_loss
                     samples_vals = self.node_vals(loss, samples[self.m:], ratios[self.m:])
@@ -437,3 +450,25 @@ class FixedTSI_IW(FixedTSI):
                         edges.add((jump[1], n, j))
         return infected
 
+
+"""
+    Independent Cascades Model
+"""
+class ICM(FixedTSI):
+    def single_sample(self, s):
+        for n in self.G.neighbors[s]:
+            for i in range(int(self.G.graph[s][n]["weight"])):
+                edges.add((s, n, i))
+        infected = {}
+        infected[s] = [1]
+        for i in range(1, self.T):
+            jump = random.sample(edges, 1)[0]
+            infected[jump[1]] = [i+1]
+            for n in self.G.neighbors[jump[1]]:
+                if n in infected:
+                    for j in range(int(self.G.graph[jump[1]][n]["weight"])):
+                        edges.discard((n, jump[1], j))
+                else:
+                    for j in range(int(self.G.graph[jump[1]][n]["weight"])):
+                        edges.add((jump[1], n, j))
+        return infected
