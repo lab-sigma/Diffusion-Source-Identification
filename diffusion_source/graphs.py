@@ -6,9 +6,7 @@ import pandas as pd
 import random
 
 class Graph:
-    def __init__(self, N, setup_distances=False):
-        self.N = N
-
+    def __init__(self, setup_distances=False):
         #print("Generating neighbor dict")
         self.neighbors = {}
         for n in self.graph.nodes:
@@ -33,142 +31,8 @@ class Graph:
         return self.distances[i][j]
 
 class DirectedGraph(Graph):
-    def __init__(self, N):
-        super().__init__(N)
-
-    def sample(self, s, T):
-        edges = set()
-        for e in self.graph.out_edges(s):
-            edges.add(e)
-        infected = set([s])
-        infection_order = [s]
-        for _ in range(1, T):
-            if len(edges) == 0:
-                break
-            jump = random.sample(edges, 1)[0]
-            infected.add(jump[1])
-            infection_order.append(jump[1])
-            for e in self.graph.out_edges(jump[1]):
-                if not e[1] in infected:
-                    edges.add(e)
-            edges = set([e for e in edges if (not e[1] in infected)])
-        return infected, infection_order
-
-    def select_best_source(self):
-        best = -1
-        reachable = -1
-        for n in self.graph.nodes:
-            r = len(self.distances[n].keys())
-            if r > reachable:
-                best = n
-                reachable = r
-        return best
-
-    def source_choices(self, min_reachable=150):
-        choices = set()
-        for n in self.graph.nodes:
-            if len(self.distances[n].keys()) >= min_reachable:
-                choices.add(n)
-        return choices
-
-    def select_source(self, min_reachable=150):
-        choices = self.source_choices(min_reachable)
-        if len(choices) == 0:
-            self.source = self.select_best_source()
-        else:
-            self.source = random.sample(choices, 1)[0]
-        return self.source
-
-    def source_candidates(self, x):
-        gs = self.graph.subgraph(x)
-        sub_distances = {}
-        for d in nx.all_pairs_shortest_path_length(gs):
-            sub_distances[d[0]] = d[1]
-        candidates = []
-        for n in x:
-            if n in sub_distances.keys() and len((set(x) - set(sub_distances[n].keys())) - set([n])) == 0:
-                candidates += [n]
-
-        return candidates
-
-class WeightedGraph(Graph):
-    def __init__(self, N):
-        super().__init__(N)
-
-    def sample(self, s, T):
-        edges = list()
-        weights = list()
-        for e in self.graph.edges(s, data=True):
-            edges += [e]
-        infected = set([s])
-        infection_order = [s]
-        for _ in range(1, T):
-            if len(edges) == 0:
-                break
-            weights = np.array([e[2]["weight"] for e in edges])
-            jump_index = np.random.choice(list(range(len(edges))), 1, p=weights/sum(weights))[0]
-            jump = edges[jump_index]
-            infected.add(jump[1])
-            infection_order.append(jump[1])
-            for e in self.graph.edges(jump[1], data=True):
-                end = e[0]
-                if e[0] == jump[1]:
-                    end = e[1]
-                if not end in infected:
-                    edges += [e]
-            edges = [e for e in edges if not (e[0] in infected and e[1] in infected)]
-        return infected, infection_order
-
-class IntegerWeightedGraph(Graph):
-    def __init__(self, N):
-        super().__init__(N)
-
-    def sample(self, s, T):
-        edges = set()
-        for n in self.neighbors[s]:
-            edges.add((s, n))
-        infected = set([s])
-        infection_order = [s]
-        for _ in range(1, T):
-            jump = random.sample(edges, 1)[0]
-            infected.add(jump[1])
-            infection_order.append(jump[1])
-            for n in self.neighbors[jump[1]]:
-                if n in infected:
-                    while (n, jump[1]) in edges:
-                        edges.discard((n, jump[1]))
-                else:
-                    for __ in range(int(self.graph[jump[1]][n]["weight"])):
-                        edges.add((jump[1], n))
-        return infected, infection_order
-
-class GeneralGraph(Graph):
-    def __init__(self, N):
-        super().__init__(N)
-
-    def sample(self, s, T):
-        edges = list()
-        weights = list()
-        for e in self.graph.edges(s, data=True):
-            edges += [e]
-        infected = set([s])
-        infection_order = [s]
-        for _ in range(1, T):
-            if len(edges) == 0:
-                break
-            weights = np.array([e[2]["weight"] for e in edges])
-            jump_index = np.random.choice(list(range(len(edges))), 1, p=weights/sum(weights))[0]
-            jump = edges[jump_index]
-            infected.add(jump[1])
-            infection_order.append(jump[1])
-            for e in self.graph.edges(jump[1], data=True):
-                end = e[0]
-                if e[0] == jump[1]:
-                    end = e[1]
-                if not end in infected:
-                    edges += [e]
-            edges = [e for e in edges if not (e[0] in infected and e[1] in infected)]
-        return infected, infection_order
+    def __init__(self):
+        super().__init__()
 
     def select_best_source(self):
         best = -1
@@ -234,31 +98,31 @@ class RegularTree(Graph):
         for n in self.graph.nodes():
             for m in set(self.graph.nodes()) - set(self.distances[n].keys()):
                 self.distances[n][m] = float('inf')
-        super().__init__(N)
+        super().__init__()
 
 class RegularGraph(Graph):
     def __init__(self, N, degree):
         assert(N > degree)
         self.graph = nx.random_regular_graph(degree, N)
-        super().__init__(N)
+        super().__init__()
 
 class ErdosRenyi(Graph):
     def __init__(self, N, degree):
         assert(N > degree)
         self.graph = nx.fast_gnp_random_graph(N, degree/(N-1))
-        super().__init__(N)
+        super().__init__()
 
 class WattsStrogatz(Graph):
     def __init__(self, N, degree):
         assert(N > degree)
         self.graph = nx.watts_strogatz_graph(N, degree, 1/degree)
-        super().__init__(N)
+        super().__init__()
 
 class PreferentialAttachment(Graph):
     def __init__(self, N, degree):
         assert(N > degree)
         self.graph = nx.barabasi_albert_graph(N, degree)
-        super().__init__(N)
+        super().__init__()
 
 class StochasticBlock(Graph):
     def __init__(self, N, degree):
@@ -292,7 +156,7 @@ class StochasticBlock(Graph):
                 if random.random() <= M[i, j]:
                     self.graph.add_edge(i, j)
 
-        super().__init__(N)
+        super().__init__()
 
 class InfRegular(Graph):
     def __init__(self, degree):
@@ -336,88 +200,77 @@ class InfRegular(Graph):
 class FromAdjacency(Graph):
     def __init__(self, N, A):
         self.graph = nx.from_numpy_matrix(A)
-        super().__init__(N)
+        super().__init__()
 
-class DirectedFromAdjacency(DirectedGraph):
+class DirectedFromAdjacency(Graph):
     def __init__(self, E):
         self.graph = nx.from_edgelist(E, create_using=nx.DiGraph)
-        super().__init__(len(self.graph))
+        super().__init__()
 
 class EdgeList(Graph):
     def __init__(self, fname):
         self.graph = nx.readwrite.edgelist.read_edgelist(fname, delimiter=',', nodetype=int)
-        super().__init__(self.graph.number_of_nodes(), False)
+        super().__init__(False)
 
-class DirectedAdjacency(DirectedGraph):
+class DirectedAdjacency(Graph):
     def __init__(self, fname):
         df = pd.read_csv(fname, sep=' ')
         mat = df.to_numpy()
         self.graph = nx.convert_matrix.from_numpy_matrix(mat, create_using=nx.DiGraph)
-        super().__init__(self.graph.number_of_nodes())
+        super().__init__()
 
-class WeightedAdjacency(WeightedGraph):
+class WeightedAdjacency(Graph):
     def __init__(self, fname):
         df = pd.read_csv(fname, sep=' ')
         mat = df.to_numpy()
         self.graph = nx.convert_matrix.from_numpy_matrix(mat, create_using=nx.Graph)
-        super().__init__(self.graph.number_of_nodes())
+        super().__init__()
 
-class GeneralAdjacency(GeneralGraph):
+class GeneralAdjacency(Graph):
     def __init__(self, fname):
         df = pd.read_csv(fname, sep=' ')
         mat = df.to_numpy()
         self.graph = nx.convert_matrix.from_numpy_matrix(mat, create_using=nx.DiGraph)
-        super().__init__(self.graph.number_of_nodes())
+        super().__init__()
 
 class PyEdgeList(Graph):
     def __init__(self, edges):
         self.graph = nx.Graph()
         self.graph.add_edges_from(edges)
-        super().__init__(self.graph.number_of_nodes(), False)
+        super().__init__(False)
 
-class GrowingNetwork(DirectedGraph):
+class GrowingNetwork(Graph):
     def __init__(self, N):
         self.graph = nx.gn_graph(N)
-        super().__init__(N)
+        super().__init__()
 
-class ScaleFree(DirectedGraph):
+class ScaleFree(Graph):
     def __init__(self, N):
         self.graph = nx.scale_free_graph(N)
-        super().__init__(N)
+        super().__init__()
 
-class WeightedCopy(WeightedGraph):
-    def __init__(self, G):
-        self.graph = G
-        super().__init__(len(G))
-
-
-class IntegerWeightedCopy(IntegerWeightedGraph):
-    def __init__(self, G):
-        self.graph = G
-        super().__init__(len(G))
-
-class DirectedCopy(DirectedGraph):
-    def __init__(self, G):
-        self.graph = G.graph.to_directed()
-        super().__init__(len(G.graph))
+class GraphWrapper(Graph):
+    def __init__(self, graph):
+        self.graph = graph
+        super().__init__()
 
 def addRandomWeights(G, a):
     graph = G.graph
     for (u, v, w) in graph.edges(data=True):
         w['weight'] = powerlaw.rvs(a, 1)
 
-    return WeightedCopy(graph)
+    return Graph(graph)
 
 def addUniformWeights(G, a):
     graph = G.graph
     for (u, v, w) in graph.edges(data=True):
         w['weight'] = powerlaw.rvs(1, a, 1)
 
-    return WeightedCopy(graph)
+    return Graph(graph)
 
 def addConstantWeights(G):
     graph = G.graph
     for (u, v, w) in graph.edges(data=True):
         w['weight'] = 1.0
 
-    return WeightedCopy(graph)
+    return GraphWrapper(graph)

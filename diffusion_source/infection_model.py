@@ -171,7 +171,7 @@ class FixedTSI(InfectionModelBase):
         self.T = T
         self.m = m
 
-        self.probabilities = [None for _ in range(T+1)]
+        self.probabilities = [None for _ in range(T+2)]
         self.m_p = 0
 
         super().__init__(G, discrepancies, discrepancy_names)
@@ -261,8 +261,8 @@ class FixedTSI(InfectionModelBase):
             m_p = self.m
         self.m_p = m_p
         if time:
-            for i in range(1, self.T+1):
-                self.probabilities[i] = sparse.dok_matrix((len(G.graph), len(G.graph)), dtype=np.float32)
+            for t in range(1, self.T+2):
+                self.probabilities[t] = sparse.dok_matrix((len(G.graph), len(G.graph)), dtype=np.float32)
         else:
             self.probabilities[0] = sparse.dok_matrix((len(G.graph), len(G.graph)), dtype=np.float32)
         if samples is None:
@@ -272,8 +272,8 @@ class FixedTSI(InfectionModelBase):
                 self.probabilities[0][s, v] += 1/m_p
                 if time:
                     self.probabilities[t][s, v] += 1/m_p
-        for i in range(self.T+1):
-            self.probabilities[i] = self.probabilities[i].tocsr()
+        for t in range(self.T+1):
+            self.probabilities[i] = self.probabilities[t].tocsr()
 
     def include_probabilities(self, probabilities, m_p):
         for t in range(len(probabilities)):
@@ -363,7 +363,7 @@ class FixedTSI(InfectionModelBase):
             edges.add((s, n))
         infected = {}
         infected[s] = [1, len(edges)]
-        for i in range(1, self.T):
+        for i in range(1, self.T+1):
             jump = random.sample(edges, 1)[0]
             infected[jump[1]] = [i+1, 0]
             for n in self.G.neighbors[jump[1]]:
@@ -406,7 +406,7 @@ class FixedTSI_Weighted(FixedTSI):
             edges += [e]
         infected = {}
         infected[s] = [1]
-        for i in range(1, self.T):
+        for i in range(1, self.T+1):
             if len(edges) == 0:
                 break
             weights = np.array([e[2]["weight"] for e in edges])
@@ -438,7 +438,7 @@ class FixedTSI_IW(FixedTSI):
                 edges.add((s, n, i))
         infected = {}
         infected[s] = [1]
-        for i in range(1, self.T):
+        for i in range(1, self.T+1):
             jump = random.sample(edges, 1)[0]
             infected[jump[1]] = [i+1]
             for n in self.G.neighbors[jump[1]]:
@@ -482,14 +482,14 @@ class ICM_fp(FixedTSI):
 """
 class ICM(FixedTSI):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
-            expectation_after=False, m=1000):
-        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, -1, iso=False, k_iso=10, d1=False)
+            expectation_after=False, m=1000, T=-1):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
     def single_sample(self, s):
         active = set([s])
         inactive = {}
         inactive[s] = [1]
         t = 1
-        while not len(active) == 0:
+        while not (len(active) == 0 or t - T == -1):
             t += 1
             new_active = set()
             for a in active:
@@ -507,15 +507,15 @@ class ICM(FixedTSI):
 """
 class LTM(FixedTSI):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
-            expectation_after=False, m=1000):
-        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, -1, iso=False, k_iso=10, d1=False)
+            expectation_after=False, m=1000, T=-1):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
     def single_sample(self, s):
         added = set([s])
         active = {}
         active[s] = [1]
         thresholds = {}
         t = 1
-        while not len(added) == 0:
+        while not (len(added) == 0 or t - T == -1):
             t += 1
             newly_added = set()
             for a in added:
@@ -533,4 +533,3 @@ class LTM(FixedTSI):
                         active[n] = [t]
             added = newly_added
         return active
-
