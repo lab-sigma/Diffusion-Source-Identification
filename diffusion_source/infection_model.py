@@ -85,7 +85,7 @@ class InfectionModelBase(ABC):
         self.source = random.sample(set(self.G.graph.nodes()), 1)[0]
         return self.source
 
-    def p_values(self, x, meta=None, s=None):
+    def p_values(self, x, meta=None, true_s=None):
         results = {
             "p_vals": {},
             "mu_x": {}
@@ -98,7 +98,7 @@ class InfectionModelBase(ABC):
 
         for leader, group, dependencies in groupings:
 
-            if not s is None and not s in group:
+            if not true_s is None and not true_s in group:
                 continue
 
             samples = self.sample(leader, dependencies)
@@ -125,7 +125,7 @@ class InfectionModelBase(ABC):
 
     def confidence_set(self, x, alpha, new_run=True, meta=None, full=False):
         if new_run:
-            new_results = self.p_values(x, meta)
+            new_results = self.p_values(x, meta=meta)
         else:
             if self.current is None:
                 raise RuntimeError('Requested confidence set based on previous run with empty history.')
@@ -171,6 +171,7 @@ class FixedTSI(InfectionModelBase):
         self.T = T
         self.m = m
 
+        self.saved_probs = set()
         self.probabilities = [None for _ in range(T+2)]
         self.m_p = 0
 
@@ -252,28 +253,28 @@ class FixedTSI(InfectionModelBase):
 
     def sample(self, s, dependents):
         m = 2*self.m
-        if s in self.probabilities and all(self.expectation_after):
+        if s in self.saved_probs and all(self.expectation_after):
             m = self.m
         return [self.single_sample(s) for i in range(m)]
 
     def precompute_probabilities(self, s, m_p=None, time=True, samples=None):
+        self.saved_probs.add(s)
         if m_p is None:
             m_p = self.m
         self.m_p = m_p
         if time:
             for t in range(1, self.T+2):
-                self.probabilities[t] = sparse.dok_matrix((len(G.graph), len(G.graph)), dtype=np.float32)
-        else:
-            self.probabilities[0] = sparse.dok_matrix((len(G.graph), len(G.graph)), dtype=np.float32)
+                self.probabilities[t] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
+        self.probabilities[0] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
         if samples is None:
             samples = [self.single_sample(s) for i in range(m_p)]
         for sample in samples:
-            for v, (t, d) in sample.items():
+            for v, meta in sample.items():
                 self.probabilities[0][s, v] += 1/m_p
                 if time:
-                    self.probabilities[t][s, v] += 1/m_p
+                    self.probabilities[meta[0]][s, v] += 1/m_p
         for t in range(self.T+1):
-            self.probabilities[i] = self.probabilities[t].tocsr()
+            self.probabilities[t] = self.probabilities[t].tocsr()
 
     def include_probabilities(self, probabilities, m_p):
         for t in range(len(probabilities)):
@@ -284,6 +285,9 @@ class FixedTSI(InfectionModelBase):
             elif probabilities[t] is not None and self.probabilities[t] is not None:
                 self.probabilities[t] = (probabilities[t]*m_p + self.probabilities[t]*self.m_p)/(self.m_p+m_p)
         self.m_p += m_p
+        for v in self.G.graph.nodes():
+            if sum(self.probabilities[0].getrow(v)) > 0:
+                self.saved_probs.add(v)
 
     def load_probabilities(self, fname):
         m_p, probs = pickle.load(open(fname, "rb"))
@@ -319,7 +323,7 @@ class FixedTSI(InfectionModelBase):
             if canonical or expectation_after:
                 if expectation_after:
                     lf = loss
-                    if not s in self.probabilities:
+                    if not s in self.saved_probs:
                         self.precompute_probabilities(s, samples=samples[self.m:])
                     samples_vals = list()
                     for i in range(len(self.probabilities)):
@@ -364,6 +368,8 @@ class FixedTSI(InfectionModelBase):
         infected = {}
         infected[s] = [1, len(edges)]
         for i in range(1, self.T+1):
+            if len(edges) == 0:
+                break
             jump = random.sample(edges, 1)[0]
             infected[jump[1]] = [i+1, 0]
             for n in self.G.neighbors[jump[1]]:
@@ -439,6 +445,8 @@ class FixedTSI_IW(FixedTSI):
         infected = {}
         infected[s] = [1]
         for i in range(1, self.T+1):
+            if len(edges) == 0:
+                break
             jump = random.sample(edges, 1)[0]
             infected[jump[1]] = [i+1]
             for n in self.G.neighbors[jump[1]]:
@@ -489,7 +497,7 @@ class ICM(FixedTSI):
         inactive = {}
         inactive[s] = [1]
         t = 1
-        while not (len(active) == 0 or t - T == -1):
+        while not (len(active) == 0 or t - self.T == -1):
             t += 1
             new_active = set()
             for a in active:
@@ -515,7 +523,7 @@ class LTM(FixedTSI):
         active[s] = [1]
         thresholds = {}
         t = 1
-        while not (len(added) == 0 or t - T == -1):
+        while not (len(added) == 0 or t - self.T == -1):
             t += 1
             newly_added = set()
             for a in added:

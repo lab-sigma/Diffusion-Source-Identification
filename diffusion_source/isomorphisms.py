@@ -405,7 +405,7 @@ def compose_permutations(P1, P2):
             newP[p] = permf(P2, permf(P1, p))
     return newP
 
-def compile_permutations(L, join_disjoint=False):
+def compile_permutations(L, join_disjoint=True):
     groups = list()
     included = set()
     permutations = {}

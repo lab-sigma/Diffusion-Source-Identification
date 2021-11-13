@@ -26,14 +26,15 @@ index = arg % len(names)
 
 f = files[index]
 name = names[index]
+mname = "SI_{}".format(name)
 
 model_id = int(sys.argv[2])
 
-I, s, x = load_model(name)
+I, s, x = load_model(mname)
 
 m_p = 10
 
 for s in list(I.G.graph.nodes):
     I.precompute_probabilities(s, m_p)
 
-I.store_probabilities("probs/{}_{}.p".format(name, model_id))
+I.store_probabilities("probs/{}_{}.p".format(mname, model_id))
