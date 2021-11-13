@@ -264,8 +264,10 @@ class FixedTSI(InfectionModelBase):
         self.m_p = m_p
         if time:
             for t in range(1, self.T+2):
-                self.probabilities[t] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
-        self.probabilities[0] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
+                if self.probabilities[t] is None:
+                    self.probabilities[t] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
+        if self.probabilities[0] is None:
+            self.probabilities[0] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
         if samples is None:
             samples = [self.single_sample(s) for i in range(m_p)]
         for sample in samples:
@@ -286,14 +288,14 @@ class FixedTSI(InfectionModelBase):
                 self.probabilities[t] = (probabilities[t]*m_p + self.probabilities[t]*self.m_p)/(self.m_p+m_p)
         self.m_p += m_p
         for v in self.G.graph.nodes():
-            if sum(self.probabilities[0].getrow(v)) > 0:
+            if self.probabilities[0].getrow(v).sum() > 0:
                 self.saved_probs.add(v)
 
     def load_probabilities(self, fname):
         m_p, probs = pickle.load(open(fname, "rb"))
         for i in range(len(probs)):
             probs[i] = probs[i].tocsr()
-        self.include_probabilities(m_p, probs)
+        self.include_probabilities(probs, m_p)
 
     def store_probabilities(self, fname):
         pickle.dump((self.m_p, self.probabilities), open(fname, "wb"))

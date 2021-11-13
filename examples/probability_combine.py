@@ -23,20 +23,18 @@ names = [
     "StatisticsHiring"
 ]
 
-arg = int(sys.argv[1])
-index = arg % len(names)
+probs_dir = "probs"
 
-f = files[index]
-name = names[index]
+for index in range(len(names)):
+    f = files[index]
+    name = names[index]
+    mname = "SI_{}".format(name)
 
-I, s, x = load_model(name)
+    I, s, x = load_model(mname)
 
-probs_dir = "probs1"
-rfiles1 = [join(probs_dir, f) for f in listdir(probs_dir) if isfile(join(probs_dir, f)) and name in f]
-probs_dir = "probs2"
-rfiles = rfiles1 + [join(probs_dir, f) for f in listdir(probs_dir) if isfile(join(probs_dir, f)) and name in f]
+    rfiles = [join(probs_dir, f) for f in listdir(probs_dir) if isfile(join(probs_dir, f)) and mname in f]
 
-for f in rfiles:
-    I.load_probabilities(f)
+    for f in rfiles:
+        I.load_probabilities(f)
 
-I.store_probabilities("probs/{}.p".format(name))
+    I.store_probabilities("probs/{}.p".format(mname))

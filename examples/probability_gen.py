@@ -32,7 +32,7 @@ model_id = int(sys.argv[2])
 
 I, s, x = load_model(mname)
 
-m_p = 10
+m_p = 1
 
 for s in list(I.G.graph.nodes):
     I.precompute_probabilities(s, m_p)
