@@ -37,4 +37,5 @@ for index in range(len(names)):
     for f in rfiles:
         I.load_probabilities(f)
 
-    I.store_probabilities("probs/{}.p".format(mname))
+    if not I.probabilities[0] is None:
+        I.store_probabilities("probs/{}.p".format(mname))

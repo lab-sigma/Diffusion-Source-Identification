@@ -8,6 +8,9 @@ import random
 class Graph:
     def __init__(self, setup_distances=False):
         #print("Generating neighbor dict")
+
+        self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
+
         self.neighbors = {}
         for n in self.graph.nodes:
             self.neighbors[n] = set(nx.neighbors(self.graph, n))

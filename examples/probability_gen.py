@@ -36,5 +36,7 @@ m_p = 1
 
 for s in list(I.G.graph.nodes):
     I.precompute_probabilities(s, m_p)
+    #print(s)
+    #print(I.probabilities[1].getrow(s))
 
 I.store_probabilities("probs/{}_{}.p".format(mname, model_id))
