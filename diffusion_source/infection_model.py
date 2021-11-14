@@ -266,8 +266,12 @@ class FixedTSI(InfectionModelBase):
             for t in range(1, self.T+2):
                 if self.probabilities[t] is None:
                     self.probabilities[t] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
+                else:
+                    self.probabilities[t] = self.probabilities[t].todok()
         if self.probabilities[0] is None:
             self.probabilities[0] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
+        else:
+            self.probabilities[0] = self.probabilities[0].todok()
         if samples is None:
             samples = [self.single_sample(s) for i in range(m_p)]
         for sample in samples:
@@ -275,7 +279,7 @@ class FixedTSI(InfectionModelBase):
                 self.probabilities[0][s, v] += 1/m_p
                 if time:
                     self.probabilities[meta[0]][s, v] += 1/m_p
-        for t in range(self.T+1):
+        for t in range(self.T+2):
             self.probabilities[t] = self.probabilities[t].tocsr()
 
     def include_probabilities(self, probabilities, m_p):
