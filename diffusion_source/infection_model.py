@@ -303,8 +303,8 @@ class FixedTSI(InfectionModelBase):
         self.include_probabilities(probs, m_p)
 
     def store_probabilities(self, fname):
-        for i in range(len(probs)):
-            probs[i] = probs[i].tocsr()
+        for i in range(len(self.probabilities)):
+            self.probabilities[i] = self.probabilities[i].tocsr()
         pickle.dump((self.m_p, self.probabilities), open(fname, "wb"))
 
     def node_vals(self, h_t, samples, ratios):
