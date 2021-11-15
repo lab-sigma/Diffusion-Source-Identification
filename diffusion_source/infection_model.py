@@ -257,7 +257,7 @@ class FixedTSI(InfectionModelBase):
             m = self.m
         return [self.single_sample(s) for i in range(m)]
 
-    def precompute_probabilities(self, s, m_p=None, time=True, samples=None):
+    def precompute_probabilities(self, s, m_p=None, time=True, samples=None, convert=True):
         self.saved_probs.add(s)
         if m_p is None:
             m_p = self.m
@@ -266,11 +266,11 @@ class FixedTSI(InfectionModelBase):
             for t in range(1, self.T+2):
                 if self.probabilities[t] is None:
                     self.probabilities[t] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
-                else:
+                elif convert:
                     self.probabilities[t] = self.probabilities[t].todok()
         if self.probabilities[0] is None:
             self.probabilities[0] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
-        else:
+        elif convert:
             self.probabilities[0] = self.probabilities[0].todok()
         if samples is None:
             samples = [self.single_sample(s) for i in range(m_p)]
@@ -279,8 +279,9 @@ class FixedTSI(InfectionModelBase):
                 self.probabilities[0][s, v] += 1/m_p
                 if time:
                     self.probabilities[meta[0]][s, v] += 1/m_p
-        for t in range(self.T+2):
-            self.probabilities[t] = self.probabilities[t].tocsr()
+        if convert:
+            for t in range(self.T+2):
+                self.probabilities[t] = self.probabilities[t].tocsr()
 
     def include_probabilities(self, probabilities, m_p):
         for t in range(len(probabilities)):
@@ -302,6 +303,8 @@ class FixedTSI(InfectionModelBase):
         self.include_probabilities(probs, m_p)
 
     def store_probabilities(self, fname):
+        for i in range(len(probs)):
+            probs[i] = probs[i].tocsr()
         pickle.dump((self.m_p, self.probabilities), open(fname, "wb"))
 
     def node_vals(self, h_t, samples, ratios):

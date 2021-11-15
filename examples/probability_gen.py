@@ -32,11 +32,9 @@ model_id = int(sys.argv[2])
 
 I, s, x = load_model(mname)
 
-m_p = 1
+m_p = 100
 
 for s in list(I.G.graph.nodes):
-    I.precompute_probabilities(s, m_p)
-    #print(s)
-    #print(I.probabilities[1].getrow(s))
+    I.precompute_probabilities(s, m_p, convert=False)
 
 I.store_probabilities("probs/{}_{}.p".format(mname, model_id))
