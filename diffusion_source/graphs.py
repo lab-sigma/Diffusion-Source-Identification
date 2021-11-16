@@ -201,13 +201,18 @@ class InfRegular(Graph):
         self.graph = nx.generators.ego_graph(self.graph, 0, radius=r)
 
 class FromAdjacency(Graph):
-    def __init__(self, N, A):
+    def __init__(self, A):
         self.graph = nx.from_numpy_matrix(A)
         super().__init__()
 
-class DirectedFromAdjacency(Graph):
+class DirectedFromEdgeList(Graph):
     def __init__(self, E):
         self.graph = nx.from_edgelist(E, create_using=nx.DiGraph)
+        super().__init__()
+
+class DirectedFromAdjacency(Graph):
+    def __init__(self, A):
+        self.graph = nx.convert_matrix.from_numpy_matrix(A, create_using=nx.DiGraph)
         super().__init__()
 
 class EdgeList(Graph):

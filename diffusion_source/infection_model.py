@@ -265,20 +265,20 @@ class FixedTSI(InfectionModelBase):
         if time:
             for t in range(1, self.T+2):
                 if self.probabilities[t] is None:
-                    self.probabilities[t] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
+                    self.probabilities[t] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.short)
                 elif convert:
                     self.probabilities[t] = self.probabilities[t].todok()
         if self.probabilities[0] is None:
-            self.probabilities[0] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.float32)
+            self.probabilities[0] = sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.short)
         elif convert:
             self.probabilities[0] = self.probabilities[0].todok()
         if samples is None:
             samples = [self.single_sample(s) for i in range(m_p)]
         for sample in samples:
             for v, meta in sample.items():
-                self.probabilities[0][s, v] += 1/m_p
+                self.probabilities[0][s, v] += 1
                 if time:
-                    self.probabilities[meta[0]][s, v] += 1/m_p
+                    self.probabilities[meta[0]][s, v] += 1
         if convert:
             for t in range(self.T+2):
                 self.probabilities[t] = self.probabilities[t].tocsr()
@@ -286,11 +286,11 @@ class FixedTSI(InfectionModelBase):
     def include_probabilities(self, probabilities, m_p):
         for t in range(len(probabilities)):
             if self.probabilities[t] is None and probabilities[t] is not None:
-                self.probabilities[t] = probabilities[t]*m_p/(self.m_p+m_p)
+                self.probabilities[t] = probabilities[t]
             elif probabilities[t] is None and self.probabilities[t] is not None:
-                self.probabilities[t] = self.probabilities[t]*self.m_p/(self.m_p+m_p)
+                self.probabilities[t] = self.probabilities[t]
             elif probabilities[t] is not None and self.probabilities[t] is not None:
-                self.probabilities[t] = (probabilities[t]*m_p + self.probabilities[t]*self.m_p)/(self.m_p+m_p)
+                self.probabilities[t] = probabilities[t] + self.probabilities[t]
         self.m_p += m_p
         for v in self.G.graph.nodes():
             if self.probabilities[0].getrow(v).sum() > 0:
@@ -331,7 +331,6 @@ class FixedTSI(InfectionModelBase):
         for loss, canonical, expectation_after in zip(self.losses, self.canonical, self.expectation_after):
             if canonical or expectation_after:
                 if expectation_after:
-                    lf = loss
                     if not s in self.saved_probs:
                         self.precompute_probabilities(s, samples=samples[self.m:])
                     samples_vals = list()
@@ -340,12 +339,14 @@ class FixedTSI(InfectionModelBase):
                         if self.probabilities[i] is not None:
                             p_s = self.probabilities[i].getrow(s)
                         samples_vals.append(p_s)
+                    mu_x = loss(x, samples_vals, self.m_p)
+                    psi = sum([ratio*(loss(yi, samples_vals, self.m_p) >= mu_x) for yi, ratio in zip(samples[:self.m], ratios[:self.m])])/(self.m)
                 else:
                     lf = self.temporal_loss
                     samples_vals = self.node_vals(loss, samples[self.m:], ratios[self.m:])
 
-                mu_x = lf(x, samples_vals)
-                psi = sum([ratio*(lf(yi, samples_vals) >= mu_x) for yi, ratio in zip(samples[:self.m], ratios[:self.m])])/(self.m)
+                    mu_x = self.temporal_loss(x, samples_vals)
+                    psi = sum([ratio*(self.temporal_loss(yi, samples_vals) >= mu_x) for yi, ratio in zip(samples[:self.m], ratios[:self.m])])/(self.m)
             else:
                 mu_x = loss(G, x, samples[:self.m], ratios[:self.m], s)
                 psi = sum([loss(G, yi, samples[:self.m], s) >= mu_x for yi in samples[self.m:]])/self.m
@@ -428,7 +429,7 @@ class FixedTSI_Weighted(FixedTSI):
             jump_index = np.random.choice(list(range(len(edges))), 1, p=weights/sum(weights))[0]
             jump = edges[jump_index]
             infected[jump[1]] = [i+1]
-            for e in self.graph.edges(jump[1], data=True):
+            for e in self.G.graph.edges(jump[1], data=True):
                 end = e[0]
                 if e[0] == jump[1]:
                     end = e[1]

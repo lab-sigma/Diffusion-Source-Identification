@@ -49,3 +49,59 @@ def display_stationary_dist(G):
             colors += [c]
     nx.draw_networkx(G.graph.subgraph(nodes), nodelist=nodes, with_labels=True, node_color=colors, labels=labels)
     plt.show()
+
+def alpha_v_coverage(results, steps=1000):
+    alpha = np.linspace(0, 1, num=steps)
+
+    ei = next(iter(results))
+    si = next(iter(results[ei]["p_vals"]))
+    nl = len(results[ei]["p_vals"][si])
+
+    lranges = [np.zeros(steps) for _ in range(nl)]
+
+    p_max = 0
+    for t, result in results.items():
+        s = result["meta"][2]
+        for i in range(nl):
+            p = result["p_vals"][s][i]
+            if p > p_max:
+                p_max = p
+            lranges[i] += (alpha >= p)
+
+    K = len(results)
+    for i in range(nl):
+        lranges[i] /= K
+
+    for i in range(nl):
+        plt.plot(alpha, lranges[i])
+    plt.plot(alpha, alpha)
+    plt.show()
+
+    return alpha, lranges
+
+def alpha_v_size(results, steps=1000):
+    alpha = np.linspace(0, 1, num=steps)
+
+    ei = next(iter(results))
+    si = next(iter(results[ei]["p_vals"]))
+    nl = len(results[ei]["p_vals"][si])
+
+    lranges = [np.zeros(steps) for _ in range(nl)]
+
+    for t, result in results.items():
+        for i in range(nl):
+            for s, p in result["p_vals"].items():
+                lranges[i] += (alpha >= p[i])
+
+    K = len(results)
+    for i in range(nl):
+        lranges[i] /= K
+
+    T = len(results[ei]["meta"][1])
+
+    for i in range(nl):
+        plt.plot(alpha, lranges[i])
+    plt.plot(alpha, T*alpha)
+    plt.show()
+
+    return alpha, lranges
