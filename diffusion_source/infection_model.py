@@ -323,24 +323,38 @@ class FixedTSI(InfectionModelBase):
                 Tx += vals[x_i]
         return -Tx
 
+    def temporal_loss_after(self, x, P):
+        Tx = 0
+        for x_i in x:
+            Tx += P[0, x_i]
+        return Tx/self.m_p
+
     def compute_p_vals(self, x, s, samples, ratios=None):
         if ratios is None:
             ratios = [1 for _ in range(len(samples))]
 
         losses = []
+
         for loss, canonical, expectation_after in zip(self.losses, self.canonical, self.expectation_after):
             if canonical or expectation_after:
                 if expectation_after:
                     if not s in self.saved_probs:
                         self.precompute_probabilities(s, samples=samples[self.m:])
-                    samples_vals = list()
-                    for i in range(len(self.probabilities)):
-                        p_s = None
-                        if self.probabilities[i] is not None:
-                            p_s = self.probabilities[i].getrow(s)
-                        samples_vals.append(p_s)
-                    mu_x = loss(x, samples_vals, self.m_p)
-                    psi = sum([ratio*(loss(yi, samples_vals, self.m_p) >= mu_x) for yi, ratio in zip(samples[:self.m], ratios[:self.m])])/(self.m)
+                    if canonical:
+                        sample_vals = loss(1, self.T)*self.probabilities[1].getrow(s)
+                        for t in range(2, len(self.probabilities)):
+                            sample_vals += loss(t, self.T)*self.probabilities[i].getrow(s)
+                        lf = self.temporal_loss_after
+                    else:
+                        sample_vals = list()
+                        for i in range(len(self.probabilities)):
+                            p_s = None
+                            if self.probabilities[i] is not None:
+                                p_s = self.probabilities[i].getrow(s)
+                            sample_vals.append(p_s)
+                        lf = lambda t, T: loss(t, T, self.m_p)
+                    mu_x = lf(x, sample_vals)
+                    psi = sum([ratio*(lf(yi, sample_vals) >= mu_x) for yi, ratio in zip(samples[:self.m], ratios[:self.m])])/(self.m)
                 else:
                     lf = self.temporal_loss
                     samples_vals = self.node_vals(loss, samples[self.m:], ratios[self.m:])

@@ -26,8 +26,8 @@ def run_baidu():
     #cc = pd.read_csv("data/BaiduMobility/InfectionStatus.csv", index_col=0)
     names = np.array(list(df.columns))
     dates = list(range(5, 20, 5))
-    #thresh = list(range(1, 10, 2))
-    thresh = [10]
+    thresh = list(range(1, 10, 2))
+    #thresh = [10]
     s = np.where(names == 'Wuhan')[0][0]
     source = s
 
@@ -45,8 +45,8 @@ def run_baidu():
             if len(x) <= 1:
                 continue
 
-            IW = FixedTSI_Weighted(GD, losses, T=len(x)-1, m=1000)
-            I = FixedTSI(G, losses, T=len(x)-1, m=1000, d1=False, iso=False)
+            IW = FixedTSI_Weighted(GD, losses, T=len(x)-1, m=2000)
+            I = FixedTSI(G, losses, T=len(x)-1, m=2000, d1=False, iso=False)
 
             results = I.p_values(x)
 
@@ -56,8 +56,8 @@ def run_baidu():
 
             weighted_results[(t, d)] = results
 
-    pickle.dump(unweighted_results, open("results/baidu/unweighted.p", "wb"))
-    pickle.dump(weighted_results, open("results/baidu/weighted.p", "wb"))
+    pickle.dump(unweighted_results, open("results/baidu/unweighted_2000.p", "wb"))
+    pickle.dump(weighted_results, open("results/baidu/weighted_2000.p", "wb"))
 
 def graph_baidu():
     #adjacencies = np.loadtxt("data/BaiduMobility/AdjacencyMatrix-degree96.NoNames.csv", skiprows=1, delimiter=',')

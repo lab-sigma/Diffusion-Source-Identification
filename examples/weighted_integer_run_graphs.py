@@ -42,5 +42,7 @@ for index in range(len(names)):
     for f in rfiles:
         I.load_results(f)
 
+    print(name)
+    print("m = 2000")
     alpha_v_coverage(I.results)
     alpha_v_size(I.results)

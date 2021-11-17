@@ -25,20 +25,23 @@ def L2_after(x, P_full, m_p):
         xv[0, x_i] = m_p
     return (sparse.linalg.norm(P - xv)/m_p)**2
 
-def L2_h_after(x, P_full, m_p):
-    P = P_full[0]
-    Tx = 0
-    for x_i in x:
-        Tx += P[0, x_i]
-    return Tx/m_p
-
-def ADiT_h_after(x, P_full, m_p):
-    Tx = 0
-    for t in range(1, len(P_full)):
-        for x_i in x:
-            Tx += P_full[t][0, x_i]/t
-
-    return Tx/m_p
+#def L2_h_after(x, P_full, m_p):
+#    P = P_full[0]
+#    Tx = 0
+#    for x_i in x:
+#        Tx += P[0, x_i]
+#    return Tx/m_p
+#
+#def ADiT_h_after(x, P_full, m_p):
+#    Tx = 0
+#    xv = sparse.csr_matrix(P_full[0].shape)
+#    for x_i in x:
+#        xv[0, x_i] = 1
+#    xv = xv.T
+#    for t in range(1, len(P_full)):
+#        Tx += (P_full[t]*xv)/t
+#
+#    return Tx/m_p
 
 ################################
 

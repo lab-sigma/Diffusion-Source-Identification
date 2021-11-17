@@ -42,7 +42,7 @@ for index in range(len(names)):
     m_p, probs = pickle.load(open(rfiles[0], "rb"))
 
     for t in range(len(probs)):
-        probs[t] = (m_p*probs[t]).astype(np.short)
+        probs[t] = (probs[t]).astype(np.short)
         probs[t].todense()
 
     pickle.dump((m_p, probs), open(rfiles[0], "wb"))
