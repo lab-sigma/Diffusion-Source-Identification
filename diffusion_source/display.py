@@ -59,22 +59,25 @@ def alpha_v_coverage(results, steps=1000):
 
     lranges = [np.zeros(steps) for _ in range(nl)]
 
-    p_max = 0
     for t, result in results.items():
         s = result["meta"][2]
         for i in range(nl):
             p = result["p_vals"][s][i]
-            if p > p_max:
-                p_max = p
-            lranges[i] += (alpha >= p)
+            lranges[i] += (alpha > 1-p)
 
     K = len(results)
     for i in range(nl):
         lranges[i] /= K
 
+    diff = 0
+    better = 0
     for i in range(nl):
         plt.plot(alpha, lranges[i])
+        diff += np.mean(lranges[i] - alpha)
+        better += np.mean(lranges[i] >= alpha)
     plt.plot(alpha, alpha)
+    print("average deviation {}".format(diff/nl))
+    print("better rate {}".format(better/nl))
     plt.show()
 
     return alpha, lranges
@@ -89,19 +92,29 @@ def alpha_v_size(results, steps=1000):
     lranges = [np.zeros(steps) for _ in range(nl)]
 
     for t, result in results.items():
+        T = len(result["meta"][1])
         for i in range(nl):
             for s, p in result["p_vals"].items():
-                lranges[i] += (alpha >= p[i])
+                lranges[i] += (alpha >= 1-p[i])/T
 
     K = len(results)
     for i in range(nl):
         lranges[i] /= K
 
-    T = len(results[ei]["meta"][1])
-
     for i in range(nl):
         plt.plot(alpha, lranges[i])
-    plt.plot(alpha, T*alpha)
+    plt.plot(alpha, alpha)
     plt.show()
 
     return alpha, lranges
+
+def sample_size_cdf(I, steps=1000, K=1000):
+    x = np.linspace(0, len(I.G.graph), num=steps)
+
+    cdf = np.zeros(steps)
+    for k in range(K):
+        s = I.select_uniform_source()
+        cdf += len(I.data_gen(s)) < x
+
+    plt.plot(x, cdf)
+    plt.show()

@@ -278,6 +278,9 @@ class FixedTSI(InfectionModelBase):
             for v, meta in sample.items():
                 self.probabilities[0][s, v] += 1
                 if time:
+                    if meta[0] >= len(self.probabilities):
+                        for t in range(len(self.probabilities), meta[0]+1):
+                            self.probabilities.append(sparse.dok_matrix((len(self.G.graph), len(self.G.graph)), dtype=np.short))
                     self.probabilities[meta[0]][s, v] += 1
         if convert:
             for t in range(self.T+2):
@@ -521,16 +524,19 @@ class ICM(FixedTSI):
         inactive = {}
         inactive[s] = [1]
         t = 1
-        while not (len(active) == 0 or t - self.T == -1):
+        while not (len(active) == 0 or self.T - t == -1):
             t += 1
             new_active = set()
             for a in active:
                 for n in self.G.neighbors[a]:
-                    if n in inactive:
+                    if n in inactive or n in new_active:
                         continue
                     if random.random() < self.G.graph[a][n]["weight"]:
                         new_active.add(n)
-                        inactive[n] = [t]
+                    #if self.T >= 0 and len(new_active) + len(inactive) > self.T + 1:
+                    #    return inactive
+            for a in new_active:
+                inactive[a] = [t]
             active = new_active
         return inactive
 
@@ -546,22 +552,25 @@ class LTM(FixedTSI):
         active = {}
         active[s] = [1]
         thresholds = {}
+        influence = {}
         t = 1
-        while not (len(added) == 0 or t - self.T == -1):
+        while not (len(added) == 0 or self.T - t == -1):
             t += 1
             newly_added = set()
             for a in added:
                 for n in self.G.neighbors[a]:
                     if n in active:
                         continue
+                    if n not in influence:
+                        influence[n] = 0
                     if not n in thresholds:
                         thresholds[n] = random.random()
-                    influence = 0
-                    for np in self.G.neighbors[n]:
-                        if np in active:
-                            influence += self.G.graph[a][n]["weight"]
-                    if influence >= thresholds[n]:
+                    influence[n] += self.G.graph[a][n]["weight"]
+                    if influence[n] >= thresholds[n]:
                         newly_added.add(n)
-                        active[n] = [t]
+                    #if self.T >= 0 and len(newly_added) + len(added) > self.T + 1:
+                    #    return active
+            for n in newly_added:
+                active[n] = [t]
             added = newly_added
         return active

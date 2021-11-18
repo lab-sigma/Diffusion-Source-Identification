@@ -7,10 +7,10 @@ from diffusion_source.infection_model import load_model
 from diffusion_source.display import alpha_v_coverage, alpha_v_size
 
 
-results_dir = "results/vary_m"
+results_dir = "results/final_vary_m"
 
 files = [
-    "data/GlobalAirportTraffic/AirportFlightTraffic.txt",
+    #"data/GlobalAirportTraffic/AirportFlightTraffic.txt",
     "data/StatisticianCitation/TotalCite.txt",
     "data/NorthAmericaHiring/BSchoolHiring.txt",
     "data/NorthAmericaHiring/ComputerScienceHiring.txt",
@@ -19,7 +19,7 @@ files = [
 ]
 
 names = [
-    "AirportFlightTraffic",
+    #"AirportFlightTraffic",
     "StatisticianCitations",
     "BSchoolHiring",
     "ComputerScienceHiring",

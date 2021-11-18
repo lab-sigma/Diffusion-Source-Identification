@@ -2,12 +2,12 @@ from os import listdir
 from os.path import isfile, join
 import pandas as pd
 
-from diffusion_source.discrepancies import L2_h, L2_after
+from diffusion_source.discrepancies import L2_h, L2_after, ADiT_h
 from diffusion_source.infection_model import load_model
 from diffusion_source.display import alpha_v_coverage, alpha_v_size
 
 
-results_dir = "results/l2_test_reselect"
+results_dir = "results/final_weighted"
 
 files = [
     "data/GlobalAirportTraffic/AirportFlightTraffic.txt",
@@ -27,7 +27,7 @@ names = [
     "StatisticsHiring"
 ]
 
-losses = [L2_h, L2_after]
+losses = [L2_after, L2_h, ADiT_h]
 lnames = [l.__name__ for l in losses]
 
 for index in range(len(names)):
