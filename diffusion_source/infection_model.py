@@ -288,7 +288,9 @@ class FixedTSI(InfectionModelBase):
 
     def include_probabilities(self, probabilities, m_p):
         for t in range(len(probabilities)):
-            if self.probabilities[t] is None and probabilities[t] is not None:
+            if t >= len(self.probabilities):
+                self.probabilities.append(probabilities[t])
+            elif self.probabilities[t] is None and probabilities[t] is not None:
                 self.probabilities[t] = probabilities[t]
             elif probabilities[t] is None and self.probabilities[t] is not None:
                 self.probabilities[t] = self.probabilities[t]
@@ -346,7 +348,7 @@ class FixedTSI(InfectionModelBase):
                     if canonical:
                         sample_vals = loss(1, self.T)*self.probabilities[1].getrow(s)
                         for t in range(2, len(self.probabilities)):
-                            sample_vals += loss(t, self.T)*self.probabilities[i].getrow(s)
+                            sample_vals += loss(t, self.T)*self.probabilities[t].getrow(s)
                         lf = self.temporal_loss_after
                     else:
                         sample_vals = list()
