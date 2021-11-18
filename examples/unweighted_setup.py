@@ -1,6 +1,6 @@
 import diffusion_source.graphs as graphs
 from diffusion_source.infection_model import save_model, FixedTSI
-from diffusion_source.discrepancies import L2_after, L2_h, ADiT_h
+from diffusion_source.discrepancies import L2_after, L2_h, ADiT_h, ADT_h, Z_minus
 
 N = 1365
 
