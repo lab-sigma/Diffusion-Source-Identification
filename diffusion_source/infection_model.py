@@ -332,7 +332,7 @@ class FixedTSI(InfectionModelBase):
         Tx = 0
         for x_i in x:
             Tx += P[0, x_i]
-        return Tx/self.m_p
+        return -Tx
 
     def compute_p_vals(self, x, s, samples, ratios=None):
         if ratios is None:

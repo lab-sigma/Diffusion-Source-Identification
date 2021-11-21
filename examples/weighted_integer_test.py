@@ -36,4 +36,8 @@ for index in range(6):
         s = I.select_uniform_source()
         x = I.data_gen(s)
         I.p_values(x, meta=("", x, s))
+        print(I.results)
+        print(I.loss_names)
+        print(I.losses)
+        quit()
     alpha_v_size(I.results)
