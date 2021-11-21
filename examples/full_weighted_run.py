@@ -29,7 +29,6 @@ arg = (int(sys.argv[1]) - 1)
 for index in range(len(names)):
     f = files[index]
     name = names[index]
-    G = graphs.WeightedAdjacency(f)
 
 
     I, s, x = load_model("IC_{}".format(name))

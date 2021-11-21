@@ -44,5 +44,5 @@ for index in range(len(names)):
 
     print(name)
     print("m = 2000")
-    alpha_v_coverage(I.results)
-    alpha_v_size(I.results)
+    alpha_v_coverage(I.results, l_names=I.loss_names, title="Weighted SI Mean Coverage; {}".format(name))
+    alpha_v_size(I.results, l_names=I.loss_names, title="Weighted SI Mean Size; {}".format(name))
