@@ -32,7 +32,7 @@ def Z_minus(x, P_full, m_p):
     for x_i in x:
         xv[0, x_i] = 1
 
-    return (P*xv.T).sum()
+    return -(P*xv.T).sum()
 
 ################################
 

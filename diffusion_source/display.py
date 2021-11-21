@@ -52,7 +52,7 @@ def display_stationary_dist(G):
 
 def alpha_v_coverage(results, opacity=0.7, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Coverage", title="Observed Coverage"):
 
-    alpha = np.linspace(0, 1, num=steps)
+    alpha = np.linspace(0, 1+1/steps, num=steps)
 
     ei = next(iter(results))
     si = next(iter(results[ei]["p_vals"]))
@@ -95,7 +95,7 @@ def alpha_v_coverage(results, opacity=0.7, steps=1000, l_indices=None, l_names=N
     return alpha, lranges
 
 def alpha_v_size(results, opacity=0.7, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Avg. Size", title="Average Confidence Set Size"):
-    alpha = np.linspace(0, 1, num=steps)
+    alpha = np.linspace(0, 1+1/steps, num=steps)
 
     ei = next(iter(results))
     si = next(iter(results[ei]["p_vals"]))

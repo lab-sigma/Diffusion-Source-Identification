@@ -7,8 +7,8 @@ from diffusion_source.infection_model import load_model
 from diffusion_source.display import alpha_v_coverage, alpha_v_size
 
 
-losses = [L2_h, L2_after, ADiT_h, ADT_h, Z_minus]
-lnames = [l.__name__ for l in losses]
+l_indices = [0, 2, 3]
+l_names = ["L2", "ADiT", "ADT"]
 
 results_dir = "results/unweighted_results"
 
@@ -21,8 +21,9 @@ def gen_graph(mname):
     for f in rfiles:
         I.load_results(f)
 
-    alpha_v_coverage(I.results, l_names=I.loss_names, title="Unweighted SI Mean Coverage; {}".format(name))
-    alpha_v_size(I.results, l_names=I.loss_names, title="Unweighted SI Mean Size; {}".format(name))
+
+    alpha_v_coverage(I.results, l_indices=l_indices, l_names=l_names, title="Unweighted SI Mean Coverage; {}".format(name))
+    alpha_v_size(I.results, l_indices=l_indices, l_names=l_names, title="Unweighted SI Mean Size; {}".format(name))
 
 for name in names:
     gen_graph(name)
