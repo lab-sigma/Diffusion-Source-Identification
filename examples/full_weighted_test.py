@@ -75,7 +75,7 @@ for index in range(len(names)):
         G.graph[u][v]['weight'] = w['weight']/(IC_scale+max_w)
     I = ICM(G, o_losses, canonical=o_canonical, expectation_after=o_expectation_after, m=10, T=-1)
     #run_K(I, "IC", name, o_losses)
-    #sample_size_cdf(I)
+    sample_size_cdf(I)
 
     for (u, v, w) in G.graph.edges(data=True):
         G.graph[u][v]['weight'] = w['weight']*(IC_scale+max_w)
@@ -95,5 +95,5 @@ for index in range(len(names)):
     for (u, v, w) in G.graph.edges(data=True):
         G.graph[u][v]['weight'] = w['weight']/(max(LT_scale*max_w, influence[v]))
     I = LTM(G, o_losses, canonical=o_canonical, expectation_after=o_expectation_after, m=10, T=-1)
-    #sample_size_cdf(I)
+    sample_size_cdf(I)
     run_K(I, "LT", name, o_losses)

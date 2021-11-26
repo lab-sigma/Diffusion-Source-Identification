@@ -27,8 +27,8 @@ names = [
     "StatisticsHiring"
 ]
 
-losses = [L2_after, L2_h, ADiT_h]
-lnames = [l.__name__ for l in losses]
+#losses = [L2_after, L2_h, ADiT_h]
+#lnames = [l.__name__ for l in losses]
 
 for index in range(len(names)):
 #for index in [1]:
@@ -43,6 +43,5 @@ for index in range(len(names)):
         I.load_results(f)
 
     print(name)
-    print("m = 2000")
     alpha_v_coverage(I.results, l_names=I.loss_names, title="Weighted SI Mean Coverage; {}".format(name))
     alpha_v_size(I.results, l_names=I.loss_names, title="Weighted SI Mean Size; {}".format(name))

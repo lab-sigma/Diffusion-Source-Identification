@@ -7,7 +7,7 @@ from diffusion_source.infection_model import load_model
 from diffusion_source.display import alpha_v_coverage, alpha_v_size
 
 
-results_dir = "results/final_vary_m"
+results_dir = "broken_results/final_vary_m"
 
 files = [
     #"data/GlobalAirportTraffic/AirportFlightTraffic.txt",

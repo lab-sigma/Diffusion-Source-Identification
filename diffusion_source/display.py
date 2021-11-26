@@ -135,9 +135,13 @@ def sample_size_cdf(I, steps=1000, K=1000):
     x = np.linspace(0, len(I.G.graph), num=steps)
 
     cdf = np.zeros(steps)
+    sizes = []
     for k in range(K):
         s = I.select_uniform_source()
-        cdf += len(I.data_gen(s)) < x
+        xi = I.data_gen(s)
+        cdf += len(xi) < x
+        sizes += [len(xi)]
 
-    plt.plot(x, cdf)
+    #plt.plot(x, cdf)
+    plt.histogram(sizes)
     plt.show()
