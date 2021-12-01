@@ -9,6 +9,7 @@ probs2
 old_probs
 figures
 test_results
-broken_results
-broken_figures
+negative_results
+negative_figures
 tmp_figures
+appendix_figures

@@ -1,6 +1,12 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import rcParams
+
+axis_fontsize = 24
+tick_fontsize = 18
+opacity_setting = 0.7
+linewidth = 3.0
 
 def display_infected(G, x, source):
     nodes = []
@@ -50,7 +56,7 @@ def display_stationary_dist(G):
     nx.draw_networkx(G.graph.subgraph(nodes), nodelist=nodes, with_labels=True, node_color=colors, labels=labels)
     plt.show()
 
-def alpha_v_coverage(results, opacity=0.7, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Coverage", title="Observed Coverage"):
+def alpha_v_coverage(results, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Coverage", title="Observed Coverage", trunc=-1, save=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
 
     alpha = np.linspace(0, 1+1/steps, num=steps)
 
@@ -63,13 +69,19 @@ def alpha_v_coverage(results, opacity=0.7, steps=1000, l_indices=None, l_names=N
 
     lranges = [np.zeros(steps) for _ in range(len(l_indices))]
 
+    if colors is None:
+        colors = [None for _ in range(nl)]
+
+    K = 0
     for t, result in results.items():
         s = result["meta"][2]
+        if len(result["meta"][1]) <= trunc:
+            continue
+        K += 1
         for i, li in enumerate(l_indices):
             p = result["p_vals"][s][li]
             lranges[i] += (1-alpha < p)
 
-    K = len(results)
     for i, li in enumerate(l_indices):
         lranges[i] /= K
 
@@ -78,23 +90,34 @@ def alpha_v_coverage(results, opacity=0.7, steps=1000, l_indices=None, l_names=N
 
     diff = 0
     better = 0
-    for i, (li, ln) in enumerate(zip(l_indices, l_names)):
-        plt.plot(alpha, lranges[i], label=ln, alpha=opacity)
+    rcParams.update({'figure.autolayout': True})
+    for i, (li, ln, ci) in enumerate(zip(l_indices, l_names, colors)):
+        plt.plot(alpha, lranges[i], label=ln, alpha=opacity, color=ci, linewidth=linewidth)
         diff += np.mean(lranges[i] - alpha)
         better += np.mean(lranges[i] > alpha)
-    plt.plot(alpha, alpha)
-    plt.legend()
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    plt.title(title)
+    plt.plot(alpha, alpha, color="black", alpha=0.5)
+    if legend:
+        plt.legend()
+    if show_x_label:
+        plt.xlabel(x_label, fontsize=axis_fontsize)
+    plt.xticks(fontsize=tick_fontsize)
+    if show_y_label:
+        plt.ylabel(y_label, fontsize=axis_fontsize)
+    plt.yticks(fontsize=tick_fontsize)
+    plt.title(title, fontsize=axis_fontsize)
+    plt.grid()
     print("average deviation {}".format(diff/nl))
     print("better rate {}".format(better/nl))
-    plt.savefig("figures/{}.png".format(title))
+    plt.autoscale()
+    if save:
+        if filename is None:
+            filename = title
+        plt.savefig("figures/{}.pdf".format(filename))
     plt.show()
 
     return alpha, lranges
 
-def alpha_v_size(results, opacity=0.7, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Avg. Size", title="Average Confidence Set Size"):
+def alpha_v_size(results, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Avg. Size", title="Average Confidence Set Size", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
     alpha = np.linspace(0, 1+1/steps, num=steps)
 
     ei = next(iter(results))
@@ -106,30 +129,119 @@ def alpha_v_size(results, opacity=0.7, steps=1000, l_indices=None, l_names=None,
 
     lranges = [np.zeros(steps) for _ in range(len(l_indices))]
 
+    if colors is None:
+        colors = [None for _ in range(nl)]
+
+    K = 0
     for t, result in results.items():
         T = len(result["meta"][1])
+        if T <= trunc:
+            continue
+        K += 1
         for i, li in enumerate(l_indices):
             for s, p in result["p_vals"].items():
-                lranges[i] += (1-alpha < p[li])/T
+                if ratio:
+                    lranges[i] += (1-alpha < p[li])/T
+                else:
+                    lranges[i] += (1-alpha < p[li])
 
-    K = len(results)
     for i, li in enumerate(l_indices):
         lranges[i] /= K
 
     if l_names is None:
         l_names = list(range(nl))
 
-    for i, (li, ln) in enumerate(zip(l_indices, l_names)):
-        plt.plot(alpha, lranges[i], label=ln, alpha=opacity)
-    plt.plot(alpha, alpha)
-    plt.legend()
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    plt.title(title)
-    plt.savefig("figures/{}.png".format(title))
+    rcParams.update({'figure.autolayout': True})
+    for i, (li, ln, ci) in enumerate(zip(l_indices, l_names, colors)):
+        plt.plot(alpha, lranges[i], label=ln, alpha=opacity, color=ci, linewidth=linewidth)
+    if ratio:
+        plt.plot(alpha, alpha, color="black", alpha=0.5)
+    else:
+        plt.plot(alpha, T*alpha, color="black", alpha=0.5)
+    if legend:
+        plt.legend()
+    if show_x_label:
+        plt.xlabel(x_label, fontsize=axis_fontsize)
+    plt.xticks(fontsize=tick_fontsize)
+    if show_y_label:
+        plt.ylabel(y_label, fontsize=axis_fontsize)
+    plt.yticks(fontsize=tick_fontsize)
+    plt.title(title, fontsize=axis_fontsize)
+    plt.grid()
+    plt.autoscale()
+    if save:
+        if filename is None:
+            filename = title
+        plt.savefig("figures/{}.pdf".format(filename))
     plt.show()
 
     return alpha, lranges
+
+def coverage_v_size(results, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="True Confidence", y_label="Avg. Size", title="Confidence Set Size vs True Confidence", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+    alpha = np.linspace(0, 1+1/steps, num=steps)
+
+    ei = next(iter(results))
+    si = next(iter(results[ei]["p_vals"]))
+    nl = len(results[ei]["p_vals"][si])
+
+    if l_indices is None:
+        l_indices = list(range(nl))
+
+    cranges = [np.zeros(steps) for _ in range(len(l_indices))]
+    sranges = [np.zeros(steps) for _ in range(len(l_indices))]
+
+    if colors is None:
+        colors = [None for _ in range(nl)]
+
+    K = 0
+    for t, result in results.items():
+        T = len(result["meta"][1])
+        s = result["meta"][2]
+        if T <= trunc:
+            continue
+        K += 1
+        for i, li in enumerate(l_indices):
+            s = result["meta"][2]
+            p = result["p_vals"][s][li]
+            cranges[i] += (1-alpha < p)
+            for s, p in result["p_vals"].items():
+                if ratio:
+                    sranges[i] += (1-alpha < p[li])/T
+                else:
+                    sranges[i] += (1-alpha < p[li])
+
+    for i, li in enumerate(l_indices):
+        sranges[i] /= K
+        cranges[i] /= K
+
+    if l_names is None:
+        l_names = list(range(nl))
+
+    rcParams.update({'figure.autolayout': True})
+    for i, (li, ln, ci) in enumerate(zip(l_indices, l_names, colors)):
+        plt.plot(cranges[i], sranges[i], label=ln, alpha=opacity, color=ci, linewidth=linewidth)
+    if ratio:
+        plt.plot(alpha, alpha, color="black", alpha=0.5)
+    else:
+        plt.plot(alpha, T*alpha, color="black", alpha=0.5)
+    if legend:
+        plt.legend()
+    if show_x_label:
+        plt.xlabel(x_label, fontsize=axis_fontsize)
+    plt.xticks(fontsize=tick_fontsize)
+    if show_y_label:
+        plt.ylabel(y_label, fontsize=axis_fontsize)
+    plt.yticks(fontsize=tick_fontsize)
+    plt.title(title, fontsize=axis_fontsize)
+    plt.grid()
+    plt.autoscale()
+    if save:
+        if filename is None:
+            filename = title
+        plt.savefig("figures/{}.pdf".format(filename))
+    plt.show()
+
+    return alpha, cranges, sranges
 
 def sample_size_cdf(I, steps=1000, K=1000):
     x = np.linspace(0, len(I.G.graph), num=steps)

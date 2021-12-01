@@ -27,7 +27,7 @@ canonical = [True, False, True, True, False]
 for index in range(6):
     f = files[index]
     name = names[index]
-    G = graphs.WeightedAdjacency(f)
+    G = graphs.GeneralAdjacency(f)
 
     I = FixedTSI_IW(G, losses, expectation_after=expectation_after, canonical=canonical, m=2000, T=min(150, len(G.graph)//5))
     #I = FixedTSI_IW(G, [L2_after, L2_h_after, ADiT_h_after], expectation_after=[True, True, True], m=2000, T=min(150, len(G.graph)//5))
