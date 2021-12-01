@@ -85,6 +85,9 @@ class InfectionModelBase(ABC):
         self.source = random.sample(set(self.G.graph.nodes()), 1)[0]
         return self.source
 
+    def source_candidates(self, x):
+        return x
+
     def p_values(self, x, meta=None, true_s=None):
         results = {
             "p_vals": {},
@@ -94,7 +97,9 @@ class InfectionModelBase(ABC):
         if not meta is None:
             results["meta"] = meta
 
-        groupings, permutations = self.create_groupings(x)
+        candidates = self.source_candidates(x)
+
+        groupings, permutations = self.create_groupings(candidates)
 
         for leader, group, dependencies in groupings:
 
@@ -425,6 +430,17 @@ class FixedTSI(InfectionModelBase):
         self.source = random.sample(u, 1)[0]
         return self.source
 
+    def source_candidates(self, x):
+        gs = self.G.graph.subgraph(x)
+        sub_distances = {}
+        for d in nx.all_pairs_shortest_path_length(gs):
+            sub_distances[d[0]] = d[1]
+        candidates = []
+        for n in x:
+            if n in sub_distances.keys() and len((set(x) - set(sub_distances[n].keys())) - set([n])) == 0:
+                candidates += [n]
+
+        return set(candidates)
 
 """
     FixedTSI with weighted sampling
