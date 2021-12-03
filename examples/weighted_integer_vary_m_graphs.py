@@ -48,4 +48,4 @@ for m in ms:
         for f in rfiles:
             I.load_results(f)
 
-        alpha_v_coverage(I.results, l_names=I.loss_names, title="LT Mean Coverage; {}; m = {}".format(name, m))
+        alpha_v_coverage(I, l_names=I.loss_names, title="LT Mean Coverage; {}; m = {}".format(name, m))

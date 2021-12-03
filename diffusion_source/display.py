@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import rcParams
 
-axis_fontsize = 24
-tick_fontsize = 18
+axis_fontsize = 20
+tick_fontsize = 16
+legend_fontsize = 16
 opacity_setting = 0.7
 linewidth = 3.0
 
@@ -56,7 +57,8 @@ def display_stationary_dist(G):
     nx.draw_networkx(G.graph.subgraph(nodes), nodelist=nodes, with_labels=True, node_color=colors, labels=labels)
     plt.show()
 
-def alpha_v_coverage(results, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Coverage", title="Observed Coverage", trunc=-1, save=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+def alpha_v_coverage(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Coverage", title="Observed Coverage", trunc=-1, save=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+    results = I.results
 
     alpha = np.linspace(0, 1+1/steps, num=steps)
 
@@ -97,7 +99,7 @@ def alpha_v_coverage(results, opacity=opacity_setting, steps=1000, l_indices=Non
         better += np.mean(lranges[i] > alpha)
     plt.plot(alpha, alpha, color="black", alpha=0.5)
     if legend:
-        plt.legend()
+        plt.legend(fontsize=legend_fontsize)
     if show_x_label:
         plt.xlabel(x_label, fontsize=axis_fontsize)
     plt.xticks(fontsize=tick_fontsize)
@@ -117,7 +119,8 @@ def alpha_v_coverage(results, opacity=opacity_setting, steps=1000, l_indices=Non
 
     return alpha, lranges
 
-def alpha_v_size(results, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Avg. Size", title="Average Confidence Set Size", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+def alpha_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Avg. Size", title="Average Confidence Set Size", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+    results = I.results
     alpha = np.linspace(0, 1+1/steps, num=steps)
 
     ei = next(iter(results))
@@ -134,7 +137,7 @@ def alpha_v_size(results, opacity=opacity_setting, steps=1000, l_indices=None, l
 
     K = 0
     for t, result in results.items():
-        T = len(result["meta"][1])
+        T = len(I.source_candidates(result["meta"][1]))
         if T <= trunc:
             continue
         K += 1
@@ -159,7 +162,7 @@ def alpha_v_size(results, opacity=opacity_setting, steps=1000, l_indices=None, l
     else:
         plt.plot(alpha, T*alpha, color="black", alpha=0.5)
     if legend:
-        plt.legend()
+        plt.legend(fontsize=legend_fontsize)
     if show_x_label:
         plt.xlabel(x_label, fontsize=axis_fontsize)
     plt.xticks(fontsize=tick_fontsize)
@@ -177,7 +180,8 @@ def alpha_v_size(results, opacity=opacity_setting, steps=1000, l_indices=None, l
 
     return alpha, lranges
 
-def coverage_v_size(results, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="True Confidence", y_label="Avg. Size", title="Confidence Set Size vs True Confidence", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+def coverage_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="True Confidence", y_label="Avg. Size", title="Confidence Set Size vs True Confidence", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+    results = I.results
     alpha = np.linspace(0, 1+1/steps, num=steps)
 
     ei = next(iter(results))
@@ -195,7 +199,7 @@ def coverage_v_size(results, opacity=opacity_setting, steps=1000, l_indices=None
 
     K = 0
     for t, result in results.items():
-        T = len(result["meta"][1])
+        T = len(I.source_candidates(result["meta"][1]))
         s = result["meta"][2]
         if T <= trunc:
             continue
@@ -225,7 +229,7 @@ def coverage_v_size(results, opacity=opacity_setting, steps=1000, l_indices=None
     else:
         plt.plot(alpha, T*alpha, color="black", alpha=0.5)
     if legend:
-        plt.legend()
+        plt.legend(fontsize=legend_fontsize)
     if show_x_label:
         plt.xlabel(x_label, fontsize=axis_fontsize)
     plt.xticks(fontsize=tick_fontsize)

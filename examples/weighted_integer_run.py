@@ -4,7 +4,7 @@ import diffusion_source.graphs as graphs
 from diffusion_source.infection_model import load_model
 
 files = [
-    #"data/GlobalAirportTraffic/AirportFlightTraffic.txt",
+    "data/GlobalAirportTraffic/AirportFlightTraffic.txt",
     "data/StatisticianCitation/TotalCite.txt",
     "data/NorthAmericaHiring/BSchoolHiring.txt",
     "data/NorthAmericaHiring/ComputerScienceHiring.txt",
@@ -13,7 +13,7 @@ files = [
 ]
 
 names = [
-    #"AirportFlightTraffic",
+    "AirportFlightTraffic",
     "StatisticianCitations",
     "BSchoolHiring",
     "ComputerScienceHiring",
@@ -35,6 +35,7 @@ for k in range(K):
 
         s = I.select_uniform_source()
         x = I.data_gen(s)
+        quit()
 
         I.p_values(x, meta=(name, x, s))
 

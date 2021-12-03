@@ -40,4 +40,4 @@ for index in range(6):
         print(I.loss_names)
         print(I.losses)
         quit()
-    alpha_v_size(I.results)
+    alpha_v_size(I)

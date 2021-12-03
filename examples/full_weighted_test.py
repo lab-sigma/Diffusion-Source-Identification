@@ -64,8 +64,8 @@ for index in range(len(names)):
             print("", end="\r")
         print()
         print()
-        alpha_v_coverage(I.results)
-        alpha_v_size(I.results)
+        alpha_v_coverage(I)
+        alpha_v_size(I)
 
     I = FixedTSI_IW(G, si_losses, canonical=si_canonical, expectation_after=si_expectation_after, m=10, T=min(150, len(G.graph)//5))
     #run_K(I, "SI", name, si_losses)

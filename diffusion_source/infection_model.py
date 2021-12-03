@@ -430,6 +430,9 @@ class FixedTSI(InfectionModelBase):
         self.source = random.sample(u, 1)[0]
         return self.source
 
+
+
+class FixedTSI_Directed(FixedTSI):
     def source_candidates(self, x):
         gs = self.G.graph.subgraph(x)
         sub_distances = {}
@@ -445,7 +448,7 @@ class FixedTSI(InfectionModelBase):
 """
     FixedTSI with weighted sampling
 """
-class FixedTSI_Weighted(FixedTSI):
+class FixedTSI_Weighted(FixedTSI_Directed):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
             expectation_after=False, m=1000, T=150):
         super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
@@ -477,7 +480,7 @@ class FixedTSI_Weighted(FixedTSI):
 """
     FixedTSI with weighted sampling and integer weights
 """
-class FixedTSI_IW(FixedTSI):
+class FixedTSI_IW(FixedTSI_Directed):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
             expectation_after=False, m=1000, T=150):
         super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
@@ -507,7 +510,7 @@ class FixedTSI_IW(FixedTSI):
 """
     Independent Cascades Model with fixed propagation probability
 """
-class ICM_fp(FixedTSI):
+class ICM_fp(FixedTSI_Directed):
     def __init__(self, G, discrepancies, p, discrepancy_names=None, canonical=True,
             expectation_after=False, m=1000, iso=True, k_iso=10):
         self.p = p
@@ -533,7 +536,7 @@ class ICM_fp(FixedTSI):
 """
     Independent Cascades Model
 """
-class ICM(FixedTSI):
+class ICM(FixedTSI_Directed):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
             expectation_after=False, m=1000, T=-1):
         super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
@@ -561,7 +564,7 @@ class ICM(FixedTSI):
 """
     Linear Threshold Model
 """
-class LTM(FixedTSI):
+class LTM(FixedTSI_Directed):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
             expectation_after=False, m=1000, T=-1):
         super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)

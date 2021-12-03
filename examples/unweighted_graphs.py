@@ -26,14 +26,14 @@ def gen_graph(mname, title):
 
     legend=True
     show_y_label=True
-    if not mname == "regular_tree":
-        legend=False
-        show_y_label=False
+    #if not mname == "regular_tree":
+    #    legend=False
+    #    show_y_label=False
 
-    alpha_v_coverage(I.results, l_indices=l_indices, l_names=l_names, filename="Unweighted SI Mean Coverage; {}".format(name), save=True, legend=legend, show_y_label=show_y_label, title=title, colors=colors)
-    alpha_v_size(I.results, l_indices=l_indices, l_names=l_names, filename="Unweighted SI Mean Size; {}".format(name), save=True, legend=legend, show_y_label=show_y_label, title=title, colors=colors)
-    #alpha_v_coverage(I.results, l_names=I.loss_names, title="Unweighted SI Mean Coverage; {}".format(mname))
-    #alpha_v_size(I.results, l_names=I.loss_names, title="Unweighted SI Mean Size; {}".format(mname))
+    alpha_v_coverage(I, l_indices=l_indices, l_names=l_names, filename="Unweighted SI Mean Coverage; {}".format(name), save=True, legend=legend, show_y_label=show_y_label, title=title, colors=colors)
+    alpha_v_size(I, l_indices=l_indices, l_names=l_names, filename="Unweighted SI Mean Size; {}".format(name), save=True, legend=legend, show_y_label=show_y_label, title=title, colors=colors)
+    #alpha_v_coverage(I, l_names=I.loss_names, title="Unweighted SI Mean Coverage; {}".format(mname))
+    #alpha_v_size(I, l_names=I.loss_names, title="Unweighted SI Mean Size; {}".format(mname))
 
 for name, title in zip(names, titles):
     gen_graph(name, title)
