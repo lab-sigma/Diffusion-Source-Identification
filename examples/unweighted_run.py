@@ -12,15 +12,18 @@ K = 2
 arg = (int(sys.argv[1]) - 1)
 
 def run_name(mname, k):
-    if exists("results/unweighted_results/{}_{}_{}.p".format(mname, arg+1, k)):
-        return
+    #if exists("results/unweighted_results/{}_{}_{}.p".format(mname, arg+1, k)):
+    #    return
     I, s, x = load_model(mname)
-    I.load_probabilities("probs/{}.p".format(mname))
+    #I.load_probabilities("probs/{}.p".format(mname))
     s = I.select_uniform_source()
     x = I.data_gen(s)
+    I.m = 1
+    I.iso=False
+    I.d1=False
 
     I.p_values(x, meta=(mname, x, s))
-    I.store_results("results/unweighted_results/{}_{}_{}.p".format(mname, arg+1, k))
+    #I.store_results("results/unweighted_results/{}_{}_{}.p".format(mname, arg+1, k))
 
 for k in range(K):
     for name in names:

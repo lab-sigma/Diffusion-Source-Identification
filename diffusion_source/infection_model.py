@@ -18,13 +18,17 @@ from diffusion_source.discrepancies import L2_h
 
 from abc import ABC
 
+"""
+    Functions for saving and loading an infection model as a pickle file
+"""
+
 def save_model(I, s, x, name):
     pickle.dump((I, s, x), open("saved/" + name + ".p", "wb"))
 
 def load_model(name):
     return pickle.load(open("saved/" + name + ".p", "rb"))
 
-# Conditionally expand element
+# Conditionally expand element (helper function)
 def cexpand(d, l):
     if not hasattr(d, "__len__"):
         return [d for _ in range(l)]
@@ -45,9 +49,15 @@ class InfectionModelBase(ABC):
         else:
             self.loss_names = cexpand(discrepancy_names, 1)
 
+    """
+        Store results as a pickle file at the given filename
+    """
     def store_results(self, fname):
         pickle.dump(self.results, open(fname, "wb"))
 
+    """
+        Load results from
+    """
     def load_results(self, fname, append=True):
         results = pickle.load(open(fname, "rb"))
         if append:

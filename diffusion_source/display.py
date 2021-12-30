@@ -121,7 +121,7 @@ def alpha_v_coverage(I, opacity=opacity_setting, steps=1000, l_indices=None, l_n
 
 def alpha_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Avg. Size", title="Average Confidence Set Size", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
     results = I.results
-    alpha = np.linspace(0, 1+1/steps, num=steps)
+    alpha = np.linspace(-1/steps, 1+1/steps, num=steps)
 
     ei = next(iter(results))
     si = next(iter(results[ei]["p_vals"]))
@@ -136,10 +136,12 @@ def alpha_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names
         colors = [None for _ in range(nl)]
 
     K = 0
+    mean_T = 0
     for t, result in results.items():
         T = len(I.source_candidates(result["meta"][1]))
         if T <= trunc:
             continue
+        mean_T += T
         K += 1
         for i, li in enumerate(l_indices):
             for s, p in result["p_vals"].items():
@@ -153,6 +155,9 @@ def alpha_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names
 
     if l_names is None:
         l_names = list(range(nl))
+
+    mean_T /= K
+    print(mean_T)
 
     rcParams.update({'figure.autolayout': True})
     for i, (li, ln, ci) in enumerate(zip(l_indices, l_names, colors)):

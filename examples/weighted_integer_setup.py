@@ -43,4 +43,4 @@ for index in range(6):
     print(max([G.graph.out_degree[v] for v in G.graph]))
     print()
 
-    #save_model(I, s, x, name)
+    save_model(I, s, x, name)
