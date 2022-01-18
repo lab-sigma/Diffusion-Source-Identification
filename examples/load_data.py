@@ -4,18 +4,65 @@ from os import listdir
 import matplotlib.pyplot as plt
 import networkx as nx
 from collections import Counter
+import sys
 
 import pickle
 
 import diffusion_source.graphs as graphs
 from diffusion_source.infection_model import FixedTSI_Weighted, FixedTSI
-from diffusion_source.discrepancies import L2_h, ADiT_h
+from diffusion_source.discrepancies import L2_h, ADiT_h, ADT_h
 
-def run_baidu():
+def run_baidu_single(arg=0):
+
+    truncs = [0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0]
+    dates = list(range(1, 21, 1))
+    threshes = [1, 2, 5, 10]
+    print(len(truncs)*len(dates)*len(threshes))
+
+    trunc = truncs[(int)(arg % len(truncs))]
+    date = dates[(int)((arg / len(truncs)) % len(dates))]
+    thresh = threshes[(int)(arg / (len(truncs) * len(dates)))]
+
 
     df = pd.read_csv("data/BaiduMobility/TrafficVol.csv", sep=',', index_col=0)
     mat = df.to_numpy()
     mat = np.nan_to_num(df)
+
+    mat[abs(mat) < trunc] = 0.0
+
+    GD = graphs.DirectedFromAdjacency(mat)
+    G = graphs.FromAdjacency(mat)
+
+    cc = pd.read_csv("data/BaiduMobility/ConfirmedCases.csv", index_col=0)
+    #cc = pd.read_csv("data/BaiduMobility/InfectionStatus.csv", index_col=0)
+    names = np.array(list(df.columns))
+    #thresh = [10]
+    s = np.where(names == 'Wuhan')[0][0]
+    source = s
+
+    losses = [L2_h, ADiT_h, ADT_h]
+
+    x = set()
+    for i in range(len(G.graph)):
+        if cc.iloc[i, date] >= thresh:
+            x.add(i)
+    if len(x) <= 1:
+        return
+
+    IW = FixedTSI_Weighted(GD, losses, T=len(x)-1, m=2000)
+    I = FixedTSI(G, losses, T=len(x)-1, m=2000, d1=False, iso=False)
+
+    results = IW.p_values(x)
+    pickle.dump(results, open("results/baidu/weighted_2000_{}.p".format(arg), "wb"))
+
+    results = I.p_values(x)
+    pickle.dump(results, open("results/baidu/unweighted_2000_{}.p".format(arg), "wb"))
+
+def run_baidu():
+    df = pd.read_csv("data/BaiduMobility/TrafficVol.csv", sep=',', index_col=0)
+    mat = df.to_numpy()
+    mat = np.nan_to_num(df)
+
     trunc = 1
     mat[abs(mat) < trunc] = 0.0
 
@@ -26,7 +73,7 @@ def run_baidu():
     #cc = pd.read_csv("data/BaiduMobility/InfectionStatus.csv", index_col=0)
     names = np.array(list(df.columns))
     dates = list(range(5, 20, 5))
-    thresh = list(range(1, 10, 2))
+    threshes = list(range(1, 10, 2))
     #thresh = [10]
     s = np.where(names == 'Wuhan')[0][0]
     source = s
@@ -56,8 +103,8 @@ def run_baidu():
 
             weighted_results[(t, d)] = results
 
-    pickle.dump(unweighted_results, open("results/baidu/unweighted_2000.p", "wb"))
-    pickle.dump(weighted_results, open("results/baidu/weighted_2000.p", "wb"))
+    pickle.dump(unweighted_results, open("results/baidu/unweighted_2000_{}.p".format(arg), "wb"))
+    pickle.dump(weighted_results, open("results/baidu/weighted_2000_{}.p".format(arg), "wb"))
 
 def graph_baidu():
     #adjacencies = np.loadtxt("data/BaiduMobility/AdjacencyMatrix-degree96.NoNames.csv", skiprows=1, delimiter=',')
@@ -186,4 +233,5 @@ def graph_baidu():
 
 
 if __name__ == "__main__":
-    run_baidu()
+    arg = (int(sys.argv[1]) - 1)
+    run_baidu_single(arg)
