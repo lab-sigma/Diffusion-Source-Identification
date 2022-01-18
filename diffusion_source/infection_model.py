@@ -101,7 +101,8 @@ class InfectionModelBase(ABC):
     def p_values(self, x, meta=None, true_s=None):
         results = {
             "p_vals": {},
-            "mu_x": {}
+            "mu_x": {},
+            "runtime": time.time()
         }
 
         if not meta is None:
@@ -133,6 +134,7 @@ class InfectionModelBase(ABC):
                         results["p_vals"][si] += [psi]
                         results["mu_x"][si] += [mu]
 
+        results["runtime"] = time.time() - results["runtime"]
         self.current = time.time()
         self.results[self.current] = results
 
