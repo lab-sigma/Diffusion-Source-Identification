@@ -102,7 +102,10 @@ class InfectionModelBase(ABC):
         results = {
             "p_vals": {},
             "mu_x": {},
-            "runtime": time.time()
+            "runtime": time.time(),
+            "grouping_time": 0,
+            "sampling_time": 0,
+            "loss_time": 0
         }
 
         if not meta is None:
@@ -110,15 +113,20 @@ class InfectionModelBase(ABC):
 
         candidates = self.source_candidates(x)
 
+        results["grouping_time"] = time.time()
         groupings, permutations = self.create_groupings(candidates)
+        results["grouping_time"] = time.time() - results["grouping_time"]
 
         for leader, group, dependencies in groupings:
 
             if not true_s is None and not true_s in group:
                 continue
 
+            tmp_time = time.time()
             samples = self.sample(leader, dependencies)
+            results["sampling_time"] += time.time() - tmp_time
 
+            tmp_time = time.time()
             for sg in group:
                 s = sg
                 if hasattr(sg, "__len__"):
@@ -133,6 +141,7 @@ class InfectionModelBase(ABC):
                     for mu, psi in losses:
                         results["p_vals"][si] += [psi]
                         results["mu_x"][si] += [mu]
+            results["loss_time"] += time.time() - tmp_time
 
         results["runtime"] = time.time() - results["runtime"]
         self.current = time.time()

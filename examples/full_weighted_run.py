@@ -32,17 +32,17 @@ for index in range(len(names)):
 
 
     I, s, x = load_model("IC_{}".format(name))
-    I.load_probabilities("probs/LT_{}.p".format(name))
+    #I.load_probabilities("probs/LT_{}.p".format(name))
     s = I.select_uniform_source()
     x = I.data_gen(s)
 
     I.p_values(x, meta=(name, x, s))
-    I.store_results("results/IC_results/{}_{}.p".format(name, arg+1))
+    I.store_results("results/IC_timing/{}_{}.p".format(name, arg+1))
 
     I, s, x = load_model("LT_{}".format(name))
-    I.load_probabilities("probs/LT_{}.p".format(name))
+    #I.load_probabilities("probs/LT_{}.p".format(name))
     s = I.select_uniform_source()
     x = I.data_gen(s)
 
     I.p_values(x, meta=(name, x, s))
-    I.store_results("results/LT_results/{}_{}.p".format(name, arg+1))
+    I.store_results("results/LT_timing/{}_{}.p".format(name, arg+1))

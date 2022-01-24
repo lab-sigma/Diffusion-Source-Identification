@@ -20,11 +20,6 @@ x = I.data_gen(s)
 
 save_model(I, s, x, "regular_tree")
 
-print(len(G.graph))
-print(len(G.graph.edges)/len(G.graph))
-print(max([G.graph.degree[v] for v in G.graph]))
-
-
 G = graphs.WattsStrogatz(N, 4)
 
 I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=2000, T=min(150, len(G.graph)//5))
@@ -32,11 +27,6 @@ s = I.select_uniform_source()
 x = I.data_gen(s)
 
 save_model(I, s, x, "small_world")
-
-print(len(G.graph))
-print(len(G.graph.edges)/len(G.graph))
-print(max([G.graph.degree[v] for v in G.graph]))
-
 
 G = graphs.PreferentialAttachment(N, 1)
 
@@ -46,6 +36,33 @@ x = I.data_gen(s)
 
 save_model(I, s, x, "preferential_attachment")
 
-print(len(G.graph))
-print(len(G.graph.edges)/len(G.graph))
-print(max([G.graph.degree[v] for v in G.graph]))
+###############################3
+
+files = [
+    "data/GlobalAirportTraffic/AirportFlightTraffic.txt",
+    "data/StatisticianCitation/TotalCite.txt",
+    "data/NorthAmericaHiring/BSchoolHiring.txt",
+    "data/NorthAmericaHiring/ComputerScienceHiring.txt",
+    "data/NorthAmericaHiring/HistoryHiring.txt",
+    "data/NorthAmericaHiring/StatisticsHiring.txt"
+]
+
+names = [
+    "AirportFlightTraffic",
+    "StatisticianCitations",
+    "BSchoolHiring",
+    "ComputerScienceHiring",
+    "HistoryHiring",
+    "StatisticsHiring"
+]
+
+for index in range(6):
+    f = files[index]
+    name = names[index]
+    G = graphs.FromAdjacency(f)
+
+    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=2000, T=min(150, len(G.graph)//5))
+    s = I.select_uniform_source()
+    x = I.data_gen(s)
+
+    save_model(I, s, x, "UW_{}".format(name))

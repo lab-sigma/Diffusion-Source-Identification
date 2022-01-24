@@ -23,7 +23,7 @@ names = [
 
 arg = (int(sys.argv[1]) - 1)
 
-K = 5
+K = 1
 for k in range(K):
     for index in range(len(names)):
         f = files[index]
@@ -31,13 +31,11 @@ for k in range(K):
 
         I, s, x = load_model(name)
 
-        I.load_probabilities("probs/SI_{}.p".format(name))
+        #I.load_probabilities("probs/SI_{}.p".format(name))
 
         s = I.select_uniform_source()
         x = I.data_gen(s)
-        quit()
 
         I.p_values(x, meta=(name, x, s))
 
-        print("storing {}".format(name))
         I.store_results("results/final_weighted/{}_{}_{}.p".format(name, arg+1, k))
