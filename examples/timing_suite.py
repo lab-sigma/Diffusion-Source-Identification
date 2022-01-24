@@ -17,6 +17,7 @@ arg = (int(sys.argv[1]) - 1)
 index = arg % len(mnames)
 
 def run_name(mname, k):
+    print(mname)
     #if exists("results/unweighted_results/{}_{}_{}.p".format(mname, arg+1, k)):
     #    return
     I, s, x = load_model(mname)
@@ -29,4 +30,4 @@ def run_name(mname, k):
 
 
 for k in range(K):
-    run_name(mnames[index])
+    run_name(mnames[index], k)
