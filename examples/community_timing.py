@@ -39,9 +39,16 @@ def run_graph(I, name, k, index):
     s = I.select_uniform_source()
     x = I.data_gen(s)
 
-    I.p_values(x, meta=(name, x, s))
+    print(I.p_values(x, meta=(name, x, s)))
     I.store_results("results/community_timing/{}_{}_{}_{}_{}.p".format(name, global_m, index, arg+1, k))
 
 
 for k in range(K):
-    run_graph(I, title, k, index)
+    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=global_m, T=min(150, len(G.graph)//5), iso=False, d1=False)
+    run_graph(I, "neither_{}".format(title), k, index)
+    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=global_m, T=min(150, len(G.graph)//5), iso=True, d1=True)
+    run_graph(I, "both_{}".format(title), k, index)
+    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=global_m, T=min(150, len(G.graph)//5), iso=False, d1=True)
+    run_graph(I, "d1_{}".format(title), k, index)
+    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=global_m, T=min(150, len(G.graph)//5), iso=True, d1=False)
+    run_graph(I, "iso_{}".format(title), k, index)
