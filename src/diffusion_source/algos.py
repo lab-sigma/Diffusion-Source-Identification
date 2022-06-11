@@ -1,4 +1,3 @@
-import graphs
 import time
 from collections import Counter
 import matplotlib.pyplot as plt
@@ -26,7 +25,7 @@ def message_down(T, nodes, node, N):
         message_down(T, nodes, n, N)
 
 def rumor_center(G, x):
-    GN = G.subgraph(list(x))
+    GN = G.graph.subgraph(list(x))
     nodes = dict.fromkeys(GN.nodes(), (0.0,0.0,0.0))
     root = list(GN.nodes)[0]
     T = nx.bfs_tree(GN, root)
@@ -64,7 +63,7 @@ def rumor_center(G, x):
     return center, ml, rcenter, rs, nodes
 
 def rumor_center_topk(G, x, k):
-    GN = G.subgraph(list(x))
+    GN = G.graph.subgraph(list(x))
     nodes = dict.fromkeys(GN.nodes(), (0.0,0.0,0.0))
     root = list(GN.nodes)[0]
     T = nx.bfs_tree(GN, root)
@@ -92,11 +91,11 @@ def rumor_center_topk(G, x, k):
             continue
         break
 
-    return list(topk), ml_sort
+    return list(topk), ml_dict
 
 def CraneXuConfidence(G, x, epsilon):
-    _, ml_dict = rumor_center(G, x, 1)
-    total = sum(ml_dict.items())
+    _, ml_dict = rumor_center_topk(G, x, 1)
+    total = sum([x[1] for x in ml_dict.items()])
 
     ml_sort = sorted(ml_dict.items(), key=lambda x: x[1], reverse=True)
 
@@ -104,7 +103,21 @@ def CraneXuConfidence(G, x, epsilon):
     conf = 0
     i = 0
     while conf < 1 - epsilon:
-        conf += ml_sort[i][2]/total
+        conf += ml_sort[i][1]/total
         i += 1
         Cset += [ml_sort[i][0]]
     return Cset
+
+def CraneXuVals(G, x):
+    _, ml_dict = rumor_center_topk(G, x, 1)
+
+    total = sum([x[1] for x in ml_dict.items()])
+
+    ml_sort = sorted(ml_dict.items(), key=lambda x: x[1], reverse=True)
+
+    p_vals = {}
+    conf = 0
+    for m in ml_sort:
+        p_vals[m[0]] = conf
+        conf += m[1]/total
+    return p_vals

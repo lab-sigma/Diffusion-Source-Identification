@@ -37,30 +37,30 @@ def Z_minus(x, P_full, m_p):
 ################################
 
 def L2(G, x, Y, s):
-    return len(x ^ Y)
+    return len(x ^ Y.keys())
 
 def Ld(G, x, Y, s):
     k = 3
     count = 0
-    for node in x ^ Y:
+    for node in x ^ Y.keys():
         if G.dist(node, s) <= k:
             count += 1
     return count
 
 def Le(G, x, Y, s):
     loss = 0.0
-    for node in x ^ Y:
+    for node in x ^ Y.keys():
         loss += np.exp(-G.dist(node, s))
     return loss
 
 def Ll(G, x, Y, s):
     loss = 0.0
-    for node in x ^ Y:
+    for node in x ^ Y.keys():
         loss += 1.0/G.dist(node, s)
     return loss
 
 def Lm(G, x, Y, s):
-    if x == Y:
+    if x == Y.keys():
         return 0.0
     return 1.0
 

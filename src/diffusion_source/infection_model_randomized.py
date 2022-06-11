@@ -138,9 +138,7 @@ class InfectionModelBase(ABC):
                 samples_p, ratios = self.sample_prep(s, leader, samples, permutations, dependencies)
                 losses = self.compute_p_vals(x, s, samples_p, ratios)
                 for si in sg:
-                    mapping[si] = []
-                    for mu, psi in losses:
-                        mapping[si] += [(psi, mu)]
+                    mapping[si] = losses
             loss_time = time.time() - loss_time
             return mapping, sampling_time, loss_time
 
@@ -164,8 +162,8 @@ class InfectionModelBase(ABC):
             for si in mapping.keys():
                 results["p_vals"][si] = []
                 results["mu_x"][si] = []
-                for psi, mu in mapping[si]:
-                    results["p_vals"][si] += [psi]
+                for mu, psi_g, psi_e in mapping[si]:
+                    results["p_vals"][si] += [(psi_g, psi_e)]
                     results["mu_x"][si] += [mu]
 
         results["runtime"] = time.time() - results["runtime"]
@@ -191,7 +189,7 @@ class InfectionModelBase(ABC):
 
             for si, p in p_vals.items():
                 for i, l_name in enumerate(self.loss_names):
-                    if p[i] > alpha:
+                    if p[i][0] + random.random()*p[i][1] > alpha:
                         C_sets[l_name].add(si)
 
             return C_sets
@@ -410,17 +408,21 @@ class FixedTSI(InfectionModelBase):
                             sample_vals.append(p_s)
                         lf = lambda t, T: loss(t, T, self.m_p)
                     mu_x = lf(x, sample_vals)
-                    psi = sum([ratio*(lf(yi, sample_vals) >= mu_x) for yi, ratio in zip(samples[:self.m], ratios[:self.m])])/(self.m)
+                    lvals = [lf(yi, sample_vals) for yi in samples[:self.m]]
                 else:
                     lf = self.temporal_loss
                     samples_vals = self.node_vals(loss, samples[self.m:], ratios[self.m:])
 
                     mu_x = self.temporal_loss(x, samples_vals)
-                    psi = sum([ratio*(self.temporal_loss(yi, samples_vals) >= mu_x) for yi, ratio in zip(samples[:self.m], ratios[:self.m])])/(self.m)
+                    lvals = [self.temporal_loss(yi, samples_vals) for yi in samples[:self.m]]
+                psi_g = sum([ratio*(lv > mu_x) for lv, ratio in zip(lvals, ratios[:self.m])])/self.m
+                psi_e = sum([ratio*(lv == mu_x) for lv, ratio in zip(lvals, ratios[:self.m])])/self.m
             else:
-                mu_x = loss(G, x, samples[:self.m], ratios[:self.m], s)
-                psi = sum([loss(G, yi, samples[:self.m], s) >= mu_x for yi in samples[self.m:]])/self.m
-            losses += [(mu_x, psi)]
+                mu_x = loss(self.G, x, samples[:self.m], ratios[:self.m], s)
+                lvals = [loss(self.G, yi, samples[:self.m], ratios[:self.m], s) for yi in samples[self.m:]]
+                psi_g = sum([lv > mu_x for lv in lvals])/self.m
+                psi_e = sum([lv == mu_x for lv in lvals])/self.m
+            losses += [(mu_x, psi_g, psi_e)]
         return losses
 
     def compute_ratios(self, samples, sp, permutations):
