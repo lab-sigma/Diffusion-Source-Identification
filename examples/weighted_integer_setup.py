@@ -1,5 +1,5 @@
 import diffusion_source.graphs as graphs
-from diffusion_source.infection_model import save_model, FixedTSI_IW
+from diffusion_source.infection_model_randomized import save_model, FixedTSI_IW
 from diffusion_source.discrepancies import L2_after, L2_h, ADiT_h, ADT_h, Z_minus
 
 
@@ -21,9 +21,9 @@ names = [
     "StatisticsHiring"
 ]
 
-losses = [L2_h, L2_after, ADiT_h, ADT_h, Z_minus]
-expectation_after = [True, True, True, True, True]
-canonical = [True, False, True, True, False]
+losses = [L2_h, ADiT_h, ADT_h]
+expectation_after = [False, False, False]
+canonical = [True, True, True]
 
 for index in range(6):
     f = files[index]
@@ -36,11 +36,11 @@ for index in range(6):
     s = I.select_uniform_source()
     x = I.data_gen(s)
 
-    print(len(G.graph))
-    print(len(G.graph.in_edges)/len(G.graph))
-    print(len(G.graph.out_edges)/len(G.graph))
-    print(max([G.graph.in_degree[v] for v in G.graph]))
-    print(max([G.graph.out_degree[v] for v in G.graph]))
-    print()
+    #print(len(G.graph))
+    #print(len(G.graph.in_edges)/len(G.graph))
+    #print(len(G.graph.out_edges)/len(G.graph))
+    #print(max([G.graph.in_degree[v] for v in G.graph]))
+    #print(max([G.graph.out_degree[v] for v in G.graph]))
+    #print()
 
     save_model(I, s, x, name)
