@@ -4,7 +4,7 @@ from diffusion_source.discrepancies import L2_h
 
 G = RegularTree(300, 4)
 
-I = FixedTSI(G, L2_h, T=10, m=10, d1=False, iso=False)
+I = FixedTSI(G, L2_h, T=10, m_l=10, m_p=10, d1=False, iso=False)
 
 K = 1000
 C = 0

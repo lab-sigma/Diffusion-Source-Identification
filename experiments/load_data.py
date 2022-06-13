@@ -47,8 +47,8 @@ def run_baidu_single(arg=0):
     if len(x) <= 1:
         return
 
-    IW = FixedTSI_Weighted(GD, losses, T=len(x)-1, m=2000)
-    I = FixedTSI(G, losses, T=len(x)-1, m=2000, d1=False, iso=False)
+    IW = FixedTSI_Weighted(GD, losses, T=len(x)-1, m_l=2000, m_p=2000)
+    I = FixedTSI(G, losses, T=len(x)-1, m_l=2000, m_p=2000, d1=False, iso=False)
 
     results = IW.p_values(x)
     pickle.dump(results, open("results/baidu/weighted_2000_{}.p".format(arg), "wb"))
@@ -90,8 +90,8 @@ def run_baidu():
             if len(x) <= 1:
                 continue
 
-            IW = FixedTSI_Weighted(GD, losses, T=len(x)-1, m=2000)
-            I = FixedTSI(G, losses, T=len(x)-1, m=2000, d1=False, iso=False)
+            IW = FixedTSI_Weighted(GD, losses, T=len(x)-1, m_l=2000, m_p=2000)
+            I = FixedTSI(G, losses, T=len(x)-1, m_l=2000, m_p=2000, d1=False, iso=False)
 
             results = I.p_values(x)
 

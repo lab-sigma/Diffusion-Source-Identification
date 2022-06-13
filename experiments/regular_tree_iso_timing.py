@@ -8,7 +8,7 @@ m = int(sys.argv[2])
 
 G = RegularTree(1365, 4)
 
-I = FixedTSI(G, L2_h, T=150, m=m, d1=False, iso=True, k_iso=k_iso)
+I = FixedTSI(G, L2_h, T=150, m_l=m, m_p=m, d1=False, iso=True, k_iso=k_iso)
 
 source = I.select_uniform_source()
 x = I.data_gen(source)

@@ -28,7 +28,7 @@ losses = [L2_h, ADiT_h, ADT_h]
 expectation_after = [False, False, False]
 canonical = [True, True, True]
 
-I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=global_m, T=min(150, len(G.graph)//5))
+I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=global_m, m_p=global_m, T=min(150, len(G.graph)//5))
 
 def run_graph(I, name, k, index):
     if exists("results/community_timing/{}_{}_{}_{}_{}.p".format(name, global_m, index, arg+1, k)):
@@ -41,11 +41,11 @@ def run_graph(I, name, k, index):
 
 
 for k in range(K):
-    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=global_m, T=min(150, len(G.graph)//5), iso=False, d1=False)
+    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=global_m, m_p=global_m, T=min(150, len(G.graph)//5), iso=False, d1=False)
     run_graph(I, "neither_{}".format(title), k, index)
-    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=global_m, T=min(150, len(G.graph)//5), iso=True, d1=True)
+    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=global_m, m_p=global_m, T=min(150, len(G.graph)//5), iso=True, d1=True)
     run_graph(I, "both_{}".format(title), k, index)
-    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=global_m, T=min(150, len(G.graph)//5), iso=False, d1=True)
+    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=global_m, m_p=global_m, T=min(150, len(G.graph)//5), iso=False, d1=True)
     run_graph(I, "d1_{}".format(title), k, index)
-    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=global_m, T=min(150, len(G.graph)//5), iso=True, d1=False)
+    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=global_m, m_p=global_m, T=min(150, len(G.graph)//5), iso=True, d1=False)
     run_graph(I, "iso_{}".format(title), k, index)

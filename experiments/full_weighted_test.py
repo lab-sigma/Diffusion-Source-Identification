@@ -65,13 +65,13 @@ for index in range(len(names)):
         alpha_v_coverage(I)
         alpha_v_size(I)
 
-    I = FixedTSI_IW(G, si_losses, canonical=si_canonical, expectation_after=si_expectation_after, m=10, T=min(150, len(G.graph)//5))
+    I = FixedTSI_IW(G, si_losses, canonical=si_canonical, expectation_after=si_expectation_after, m_l=10, m_p=10, T=min(150, len(G.graph)//5))
     run_K(I, "SI", name, si_losses)
 
     max_w = max([w['weight'] for (u, v, w) in G.graph.edges(data=True)])
     for (u, v, w) in G.graph.edges(data=True):
         G.graph[u][v]['weight'] = w['weight']/(IC_scale+max_w)
-    I = ICM(G, o_losses, canonical=o_canonical, expectation_after=o_expectation_after, m=10, T=-1)
+    I = ICM(G, o_losses, canonical=o_canonical, expectation_after=o_expectation_after, m_l=10, m_p=10, T=-1)
     run_K(I, "IC", name, o_losses)
     sample_size_cdf(I)
 
@@ -92,6 +92,6 @@ for index in range(len(names)):
         influence[v] = vtw
     for (u, v, w) in G.graph.edges(data=True):
         G.graph[u][v]['weight'] = w['weight']/(max(LT_scale*max_w, influence[v]))
-    I = LTM(G, o_losses, canonical=o_canonical, expectation_after=o_expectation_after, m=10, T=-1)
+    I = LTM(G, o_losses, canonical=o_canonical, expectation_after=o_expectation_after, m_l=10, m_p=10, T=-1)
     sample_size_cdf(I)
     run_K(I, "LT", name, o_losses)

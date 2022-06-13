@@ -28,7 +28,7 @@ for index in range(6):
     name = names[index]
     G = graphs.GeneralAdjacency(f)
 
-    I = FixedTSI_IW(G, losses, expectation_after=expectation_after, canonical=canonical, m=2000, T=min(150, len(G.graph)//5))
+    I = FixedTSI_IW(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=2000, m_p=2000, T=min(150, len(G.graph)//5))
     s = I.select_uniform_source()
     x = I.data_gen(s)
 

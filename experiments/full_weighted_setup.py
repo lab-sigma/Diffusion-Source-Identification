@@ -31,7 +31,7 @@ for index in range(len(names)):
     name = names[index]
     G = graphs.GeneralAdjacency(f)
 
-    I = FixedTSI_IW(G, losses, canonical=canonical, expectation_after=expectation_after, m=2000, T=min(150, len(G.graph)//5))
+    I = FixedTSI_IW(G, losses, canonical=canonical, expectation_after=expectation_after, m_l=2000, m_p=2000, T=min(150, len(G.graph)//5))
     s = I.select_uniform_source()
     x = I.data_gen(s)
     save_model(I, s, x, "SI_{}".format(name))
@@ -40,7 +40,7 @@ for index in range(len(names)):
     for (u, v, w) in G.graph.edges(data=True):
         G.graph[u][v]['weight'] = w['weight']/(IC_scale+max_w)
 
-    I = ICM(G, losses, canonical=canonical, expectation_after=expectation_after, m=2000, T=-1)
+    I = ICM(G, losses, canonical=canonical, expectation_after=expectation_after, m_l=2000, m_p=2000, T=-1)
     s = I.select_uniform_source()
     x = I.data_gen(s)
     save_model(I, s, x, "IC_{}".format(name))
@@ -62,7 +62,7 @@ for index in range(len(names)):
         influence[v] = vtw
     for (u, v, w) in G.graph.edges(data=True):
         G.graph[u][v]['weight'] = w['weight']/(max(LT_scale*max_w, influence[v]))
-    I = LTM(G, losses, canonical=canonical, expectation_after=expectation_after, m=2000, T=-1)
+    I = LTM(G, losses, canonical=canonical, expectation_after=expectation_after, m_l=2000, m_p=2000, T=-1)
     s = I.select_uniform_source()
     x = I.data_gen(s)
     save_model(I, s, x, "LT_{}".format(name))

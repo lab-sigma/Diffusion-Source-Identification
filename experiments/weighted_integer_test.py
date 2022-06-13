@@ -25,7 +25,7 @@ for index in range(6):
     name = names[index]
     G = graphs.WeightedAdjacency(f)
 
-    I = FixedTSI_IW(G, [L2_after, L2_h, ADiT_h], expectation_after=[True, True, True], canonical=[False, True, True], m=10, T=10)
+    I = FixedTSI_IW(G, [L2_after, L2_h, ADiT_h], expectation_after=[True, True, True], canonical=[False, True, True], m_l=10, m_p=10, T=10)
 
     for k in range(K):
         s = I.select_uniform_source()

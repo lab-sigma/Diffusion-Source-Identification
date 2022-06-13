@@ -10,7 +10,7 @@ canonical = [True, True, True]
 
 G = graphs.RegularTree(N, 4)
 
-I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=2000, T=min(150, len(G.graph)//5))
+I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=2000, m_p=2000, T=min(150, len(G.graph)//5))
 s = I.select_uniform_source()
 x = I.data_gen(s)
 
@@ -18,7 +18,7 @@ save_model(I, s, x, "regular_tree")
 
 G = graphs.WattsStrogatz(N, 4)
 
-I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=2000, T=min(150, len(G.graph)//5))
+I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=2000, m_p=2000, T=min(150, len(G.graph)//5))
 s = I.select_uniform_source()
 x = I.data_gen(s)
 
@@ -26,7 +26,7 @@ save_model(I, s, x, "small_world")
 
 G = graphs.PreferentialAttachment(N, 1)
 
-I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=2000, T=min(150, len(G.graph)//5))
+I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=2000, m_p=2000, T=min(150, len(G.graph)//5))
 s = I.select_uniform_source()
 x = I.data_gen(s)
 
@@ -55,7 +55,7 @@ save_model(I, s, x, "preferential_attachment")
 #    name = names[index]
 #    G = graphs.FromAdjacency(f)
 #
-#    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m=2000, T=min(150, len(G.graph)//5))
+#    I = FixedTSI(G, losses, expectation_after=expectation_after, canonical=canonical, m_l=2000, m_p=2000, T=min(150, len(G.graph)//5))
 #    s = I.select_uniform_source()
 #    x = I.data_gen(s)
 #
