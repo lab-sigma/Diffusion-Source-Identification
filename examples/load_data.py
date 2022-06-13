@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
-from os import listdir
 import matplotlib.pyplot as plt
 import networkx as nx
-from collections import Counter
 import sys
 
 import pickle

@@ -2,7 +2,7 @@ import sys
 import diffusion_source.graphs as graphs
 import networkx as nx
 from diffusion_source.infection_model import save_model, FixedTSI, FixedTSI_IW, ICM, LTM
-from diffusion_source.discrepancies import L2_h, L2_after, ADiT_h, ADT_h, Z_minus
+from diffusion_source.discrepancies import L2_h, ADiT_h, ADT_h
 
 files = [
     "data/GlobalAirportTraffic/AirportFlightTraffic.txt",

@@ -1,11 +1,6 @@
 import sys
 from os.path import exists
-
-import diffusion_source.graphs as graphs
-import networkx as nx
-from diffusion_source.infection_model_randomized import load_model, FixedTSI_IW, ICM, LTM
-from diffusion_source.discrepancies import L2_h, L2_after, ADiT_h, ADT_h, Z_minus
-from diffusion_source.display import sample_size_cdf, alpha_v_coverage, alpha_v_size
+from diffusion_source.infection_model_randomized import load_model
 
 names = ["regular_tree", "small_world", "preferential_attachment"]
 K = 1

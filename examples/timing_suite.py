@@ -1,12 +1,7 @@
 import sys
 from os import listdir
 from os.path import exists, isfile, join
-
-import diffusion_source.graphs as graphs
-import networkx as nx
-from diffusion_source.infection_model import load_model, FixedTSI_IW, ICM, LTM
-from diffusion_source.discrepancies import L2_h, L2_after, ADiT_h, ADT_h, Z_minus
-from diffusion_source.display import sample_size_cdf, alpha_v_coverage, alpha_v_size
+from diffusion_source.infection_model import load_model
 
 saved_dir = "saved"
 
@@ -18,8 +13,8 @@ index = arg % len(mnames)
 
 def run_name(mname, k):
     print(mname)
-    #if exists("results/unweighted_results/{}_{}_{}.p".format(mname, arg+1, k)):
-    #    return
+    if exists("results/unweighted_results/{}_{}_{}.p".format(mname, arg+1, k)):
+        return
     I, s, x = load_model(mname)
     #I.load_probabilities("probs/{}.p".format(mname))
     s = I.select_uniform_source()

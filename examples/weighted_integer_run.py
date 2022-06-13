@@ -1,6 +1,4 @@
 import sys
-
-import diffusion_source.graphs as graphs
 from diffusion_source.infection_model_randomized import load_model
 
 files = [

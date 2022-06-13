@@ -1,10 +1,6 @@
 from os import listdir
 from os.path import isfile, join
-import pandas as pd
-
-from diffusion_source.discrepancies import L2_h, L2_after, ADiT_h, ADT_h, Z_minus
 from diffusion_source.infection_model import load_model
-from diffusion_source.display import alpha_v_coverage, alpha_v_size
 
 
 l_indices = [0, 1, 2]

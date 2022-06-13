@@ -1,11 +1,9 @@
-import sys
 import pickle
 from os import listdir
 from os.path import isfile, join
 import numpy as np
 
-import diffusion_source.graphs as graphs
-from diffusion_source.infection_model import save_model, load_model
+from diffusion_source.infection_model import load_model
 
 files = [
     "data/GlobalAirportTraffic/AirportFlightTraffic.txt",

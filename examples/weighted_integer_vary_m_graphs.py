@@ -4,7 +4,7 @@ import pandas as pd
 
 from diffusion_source.discrepancies import L2_h, L2_after
 from diffusion_source.infection_model import load_model
-from diffusion_source.display import alpha_v_coverage, alpha_v_size
+from diffusion_source.display import alpha_v_coverage
 
 
 results_dir = "broken_results/final_vary_m"

@@ -1,4 +1,3 @@
-import diffusion_source.graphs as graphs
 from diffusion_source.infection_model import load_model
 from diffusion_source.display import display_infected
 

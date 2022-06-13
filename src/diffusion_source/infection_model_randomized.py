@@ -8,6 +8,7 @@ import time
 import copy
 import pickle
 import warnings
+from collections import defaultdict
 
 from scipy.sparse.linalg import eigsh
 from scipy import sparse
@@ -212,17 +213,17 @@ class InfectionModelBase(ABC):
 """
 class FixedTSI(InfectionModelBase):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
-            expectation_after=False, m=1000, T=150, iso=True, k_iso=10, d1=True):
+            expectation_after=False, m_l=1000, m_p=1000, T=150, iso=True, k_iso=10, d1=True):
 
         self.iso = iso
         self.k_iso = k_iso
         self.d1 = d1
         self.T = T
-        self.m = m
+        self.m_l = m_l
+        self.m_p = m_p
 
         self.saved_probs = set()
         self.probabilities = [None for _ in range(T+2)]
-        self.m_p = 0
 
         super().__init__(G, discrepancies, discrepancy_names)
 
@@ -301,16 +302,13 @@ class FixedTSI(InfectionModelBase):
         return samples, [1 for _ in range(len(samples))]
 
     def sample(self, s, dependents):
-        m = 2*self.m
+        m = self.m_l + self.m_p
         if s in self.saved_probs and all(self.expectation_after):
-            m = self.m
+            m = self.m_p
         return [self.single_sample(s) for i in range(m)]
 
-    def precompute_probabilities(self, s, m_p=None, time=True, samples=None, convert=True):
+    def precompute_probabilities(self, s, time=True, samples=None, convert=True):
         self.saved_probs.add(s)
-        if m_p is None:
-            m_p = self.m
-        self.m_p = m_p
         if time:
             for t in range(1, self.T+2):
                 if self.probabilities[t] is None:
@@ -322,7 +320,7 @@ class FixedTSI(InfectionModelBase):
         elif convert:
             self.probabilities[0] = self.probabilities[0].todok()
         if samples is None:
-            samples = [self.single_sample(s) for i in range(m_p)]
+            samples = [self.single_sample(s) for i in range(m_l)]
         for sample in samples:
             for v, meta in sample.items():
                 self.probabilities[0][s, v] += 1
@@ -335,7 +333,7 @@ class FixedTSI(InfectionModelBase):
             for t in range(self.T+2):
                 self.probabilities[t] = self.probabilities[t].tocsr()
 
-    def include_probabilities(self, probabilities, m_p):
+    def include_probabilities(self, probabilities, m_l):
         for t in range(len(probabilities)):
             if t >= len(self.probabilities):
                 self.probabilities.append(probabilities[t])
@@ -345,43 +343,40 @@ class FixedTSI(InfectionModelBase):
                 self.probabilities[t] = self.probabilities[t]
             elif probabilities[t] is not None and self.probabilities[t] is not None:
                 self.probabilities[t] = probabilities[t] + self.probabilities[t]
-        self.m_p += m_p
+        self.m_l += m_l
         for v in self.G.graph.nodes():
             if self.probabilities[0].getrow(v).sum() > 0:
                 self.saved_probs.add(v)
 
     def load_probabilities(self, fname):
-        m_p, probs = pickle.load(open(fname, "rb"))
+        m_l, probs = pickle.load(open(fname, "rb"))
         for i in range(len(probs)):
             probs[i] = probs[i].tocsr()
-        self.include_probabilities(probs, m_p)
+        self.include_probabilities(probs, m_l)
 
     def store_probabilities(self, fname):
         for i in range(len(self.probabilities)):
             self.probabilities[i] = self.probabilities[i].tocsr()
-        pickle.dump((self.m_p, self.probabilities), open(fname, "wb"))
+        pickle.dump((self.m_l, self.probabilities), open(fname, "wb"))
 
     def node_vals(self, h_t, samples, ratios):
-        vals = {}
+        vals = defaultdict(int)
         for sample, ratio in zip(samples, ratios):
             for v in sample.keys():
-                if not v in vals.keys():
-                    vals[v] = 0
                 vals[v] += ratio * h_t(sample[v][0], self.T)
         return vals
 
     def temporal_loss(self, x, vals):
-        Tx = 0
+        Tx = len(x)*self.m_l
         for x_i in x:
-            if x_i in vals.keys():
-                Tx += vals[x_i]
-        return -Tx
+            Tx -= 2*vals[x_i]
+        return Tx
 
     def temporal_loss_after(self, x, P):
-        Tx = 0
+        Tx = len(x)*self.m_l
         for x_i in x:
-            Tx += P[0, x_i]
-        return -Tx
+            Tx -= 2*P[0, x_i]
+        return Tx
 
     def compute_p_vals(self, x, s, samples, ratios=None):
         if ratios is None:
@@ -393,7 +388,7 @@ class FixedTSI(InfectionModelBase):
             if canonical or expectation_after:
                 if expectation_after:
                     if not s in self.saved_probs:
-                        self.precompute_probabilities(s, samples=samples[self.m:])
+                        self.precompute_probabilities(s, samples=samples[self.m_p:])
                     if canonical:
                         sample_vals = loss(1, self.T)*self.probabilities[1].getrow(s)
                         for t in range(2, len(self.probabilities)):
@@ -408,20 +403,19 @@ class FixedTSI(InfectionModelBase):
                             sample_vals.append(p_s)
                         lf = lambda t, T: loss(t, T, self.m_p)
                     mu_x = lf(x, sample_vals)
-                    lvals = [lf(yi, sample_vals) for yi in samples[:self.m]]
+                    lvals = [lf(yi, sample_vals) for yi in samples[:self.m_p]]
                 else:
-                    lf = self.temporal_loss
-                    samples_vals = self.node_vals(loss, samples[self.m:], ratios[self.m:])
+                    samples_vals = self.node_vals(loss, samples[self.m_p:], ratios[self.m_p:])
 
                     mu_x = self.temporal_loss(x, samples_vals)
-                    lvals = [self.temporal_loss(yi, samples_vals) for yi in samples[:self.m]]
-                psi_g = sum([ratio*(lv > mu_x) for lv, ratio in zip(lvals, ratios[:self.m])])/self.m
-                psi_e = sum([ratio*(lv == mu_x) for lv, ratio in zip(lvals, ratios[:self.m])])/self.m
+                    lvals = [self.temporal_loss(yi, samples_vals) for yi in samples[:self.m_p]]
+                psi_g = sum([ratio*(lv > mu_x) for lv, ratio in zip(lvals, ratios[:self.m_p])])/self.m_p
+                psi_e = sum([ratio*(lv == mu_x) for lv, ratio in zip(lvals, ratios[:self.m_p])])/self.m_p
             else:
-                mu_x = loss(self.G, x, samples[:self.m], ratios[:self.m], s)
-                lvals = [loss(self.G, yi, samples[:self.m], ratios[:self.m], s) for yi in samples[self.m:]]
-                psi_g = sum([lv > mu_x for lv in lvals])/self.m
-                psi_e = sum([lv == mu_x for lv in lvals])/self.m
+                mu_x = loss(self.G, x, samples[:self.m_p], ratios[:self.m_p], s)
+                lvals = [loss(self.G, yi, samples[:self.m_p], ratios[:self.m_p], s) for yi in samples[self.m_p:]]
+                psi_g = sum([lv > mu_x for lv in lvals])/self.m_p
+                psi_e = sum([lv == mu_x for lv in lvals])/self.m_p
             losses += [(mu_x, psi_g, psi_e)]
         return losses
 
@@ -465,20 +459,6 @@ class FixedTSI(InfectionModelBase):
     def data_gen(self, s):
         return set(iter(self.single_sample(s).keys()))
 
-    def select_source(self, seed=None):
-        if seed is not None:
-            random.seed(seed)
-        u = nx.eigenvector_centrality_numpy(self.G.graph)
-        median = np.median(np.absolute(list(u.values())))
-        u = [ui for ui in u.keys() if abs(u[ui]) >= median]
-        if len(u) == 0:
-            u = set(self.G.graph.nodes)
-        else:
-            u = set(u)
-        self.source = random.sample(u, 1)[0]
-        return self.source
-
-
 
 class FixedTSI_Directed(FixedTSI):
     def source_candidates(self, x):
@@ -498,8 +478,8 @@ class FixedTSI_Directed(FixedTSI):
 """
 class FixedTSI_Weighted(FixedTSI_Directed):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
-            expectation_after=False, m=1000, T=150):
-        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
+            expectation_after=False, m_l=1000, m_p=1000, T=150):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m_l, m_p, T, iso=False, k_iso=10, d1=False)
 
     def single_sample(self, s):
         edges = list()
@@ -530,8 +510,8 @@ class FixedTSI_Weighted(FixedTSI_Directed):
 """
 class FixedTSI_IW(FixedTSI_Directed):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
-            expectation_after=False, m=1000, T=150):
-        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
+            expectation_after=False, m_l=1000, m_p=1000, T=150):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m_l, m_p, T, iso=False, k_iso=10, d1=False)
 
     def single_sample(self, s):
         edges = set()
@@ -560,9 +540,9 @@ class FixedTSI_IW(FixedTSI_Directed):
 """
 class ICM_fp(FixedTSI_Directed):
     def __init__(self, G, discrepancies, p, discrepancy_names=None, canonical=True,
-            expectation_after=False, m=1000, iso=True, k_iso=10):
+            expectation_after=False, m_l=1000, m_p=1000, iso=True, k_iso=10):
         self.p = p
-        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, -1, iso=iso, k_iso=k_iso, d1=False)
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m_l, m_p, -1, iso=iso, k_iso=k_iso, d1=False)
     def single_sample(self, s):
         active = set([s])
         inactive = {}
@@ -586,8 +566,8 @@ class ICM_fp(FixedTSI_Directed):
 """
 class ICM(FixedTSI_Directed):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
-            expectation_after=False, m=1000, T=-1):
-        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
+            expectation_after=False, m_l=1000, m_p=1000, T=-1):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m_l, m_p, T, iso=False, k_iso=10, d1=False)
     def single_sample(self, s):
         active = set([s])
         inactive = {}
@@ -614,8 +594,8 @@ class ICM(FixedTSI_Directed):
 """
 class LTM(FixedTSI_Directed):
     def __init__(self, G, discrepancies, discrepancy_names=None, canonical=True,
-            expectation_after=False, m=1000, T=-1):
-        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m, T, iso=False, k_iso=10, d1=False)
+            expectation_after=False, m_l=1000, m_p=1000, T=-1):
+        super().__init__(G, discrepancies, discrepancy_names, canonical, expectation_after, m_l, m_p, T, iso=False, k_iso=10, d1=False)
     def single_sample(self, s):
         added = set([s])
         active = {}
@@ -637,8 +617,6 @@ class LTM(FixedTSI_Directed):
                     influence[n] += self.G.graph[a][n]["weight"]
                     if influence[n] >= thresholds[n]:
                         newly_added.add(n)
-                    #if self.T >= 0 and len(newly_added) + len(added) > self.T + 1:
-                    #    return active
             for n in newly_added:
                 active[n] = [t]
             added = newly_added

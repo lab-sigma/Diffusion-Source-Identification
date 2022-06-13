@@ -1,12 +1,8 @@
 import diffusion_source.graphs as graphs
 from diffusion_source.infection_model_randomized import save_model, FixedTSI
-from diffusion_source.discrepancies import L2_after, L2_h, ADiT_h, ADT_h, Z_minus
+from diffusion_source.discrepancies import L2_h, ADiT_h, ADT_h
 
 N = 1365
-
-losses = [L2_h, L2_after, ADiT_h, ADT_h, Z_minus]
-expectation_after = [True, True, True, True, True]
-canonical = [True, False, True, True, False]
 
 losses = [L2_h, ADiT_h, ADT_h]
 expectation_after = [False, False, False]

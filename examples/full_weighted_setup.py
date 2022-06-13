@@ -36,15 +36,12 @@ for index in range(len(names)):
     I = FixedTSI_IW(G, losses, canonical=canonical, expectation_after=expectation_after, m=2000, T=min(150, len(G.graph)//5))
     s = I.select_uniform_source()
     x = I.data_gen(s)
-    #save_model(I, s, x, "SI_{}".format(name))
+    save_model(I, s, x, "SI_{}".format(name))
 
     max_w = max([w['weight'] for (u, v, w) in G.graph.edges(data=True)])
     for (u, v, w) in G.graph.edges(data=True):
         G.graph[u][v]['weight'] = w['weight']/(IC_scale+max_w)
-    print(nx.adjacency_matrix(G.graph))
-    print(G.graph[0][1])
-    print(G.graph[1][0])
-    quit()
+
     I = ICM(G, losses, canonical=canonical, expectation_after=expectation_after, m=2000, T=-1)
     s = I.select_uniform_source()
     x = I.data_gen(s)

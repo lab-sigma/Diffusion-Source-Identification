@@ -31,16 +31,7 @@ for index in range(6):
     G = graphs.GeneralAdjacency(f)
 
     I = FixedTSI_IW(G, losses, expectation_after=expectation_after, canonical=canonical, m=2000, T=min(150, len(G.graph)//5))
-    #I = FixedTSI_IW(G, [L2_after, L2_h_after, ADiT_h_after], expectation_after=[True, True, True], m=2000, T=min(150, len(G.graph)//5))
-    #I = FixedTSI_IW(G, [L2_after, L2_h_after, ADiT_h_after], expectation_after=[True, True, True], m=10, T=10)
     s = I.select_uniform_source()
     x = I.data_gen(s)
-
-    #print(len(G.graph))
-    #print(len(G.graph.in_edges)/len(G.graph))
-    #print(len(G.graph.out_edges)/len(G.graph))
-    #print(max([G.graph.in_degree[v] for v in G.graph]))
-    #print(max([G.graph.out_degree[v] for v in G.graph]))
-    #print()
 
     save_model(I, s, x, name)
