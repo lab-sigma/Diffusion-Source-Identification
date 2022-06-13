@@ -1,8 +1,8 @@
 import networkx as nx
 from diffusion_source.graphs import GraphWrapper
-from diffusion_source.infection_model_randomized import FixedTSI_IW, ICM, LTM
+from diffusion_source.infection_model import FixedTSI_IW, ICM, LTM
 from diffusion_source.discrepancies import L2_h, ADiT_h, ADT_h, L2, loss_creator
-from diffusion_source.display_randomized import alpha_v_coverage, alpha_v_size, coverage_v_size
+from diffusion_source.display import alpha_v_coverage, alpha_v_size, coverage_v_size
 
 losses = [L2_h, ADiT_h, ADT_h]
 #losses = [loss_creator(L2)]

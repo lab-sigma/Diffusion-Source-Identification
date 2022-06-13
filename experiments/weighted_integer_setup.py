@@ -1,5 +1,5 @@
 import diffusion_source.graphs as graphs
-from diffusion_source.infection_model_randomized import save_model, FixedTSI_IW
+from diffusion_source.infection_model import save_model, FixedTSI_IW
 from diffusion_source.discrepancies import L2_after, L2_h, ADiT_h, ADT_h, Z_minus
 
 

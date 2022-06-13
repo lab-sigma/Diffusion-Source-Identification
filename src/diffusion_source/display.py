@@ -1,4 +1,5 @@
 import networkx as nx
+import random
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import rcParams
@@ -57,7 +58,7 @@ def display_stationary_dist(G):
     nx.draw_networkx(G.graph.subgraph(nodes), nodelist=nodes, with_labels=True, node_color=colors, labels=labels)
     plt.show()
 
-def alpha_v_coverage(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Coverage", title="Observed Coverage", trunc=-1, save=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+def alpha_v_coverage(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Coverage", title="Observed Coverage", trunc=-1, save=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None, randomized=True):
     results = I.results
 
     alpha = np.linspace(0, 1+1/steps, num=steps)
@@ -75,6 +76,7 @@ def alpha_v_coverage(I, opacity=opacity_setting, steps=1000, l_indices=None, l_n
         colors = [None for _ in range(nl)]
 
     K = 0
+    rand = {}
     for t, result in results.items():
         s = result["meta"][2]
         if len(result["meta"][1]) <= trunc:
@@ -82,7 +84,10 @@ def alpha_v_coverage(I, opacity=opacity_setting, steps=1000, l_indices=None, l_n
         K += 1
         for i, li in enumerate(l_indices):
             p = result["p_vals"][s][li]
-            lranges[i] += (1-alpha < p)
+            u = 1.0
+            if randomized:
+                u = random.random()
+            lranges[i] += (1-alpha < p[0] + u*p[1])
 
     for i, li in enumerate(l_indices):
         lranges[i] /= K
@@ -119,7 +124,7 @@ def alpha_v_coverage(I, opacity=opacity_setting, steps=1000, l_indices=None, l_n
 
     return alpha, lranges
 
-def alpha_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Avg. Size", title="Average Confidence Set Size", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+def alpha_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="Confidence Level", y_label="Avg. Size", title="Average Confidence Set Size", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None, randomized=True):
     results = I.results
     alpha = np.linspace(-1/steps, 1+1/steps, num=steps)
 
@@ -145,10 +150,13 @@ def alpha_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names
         K += 1
         for i, li in enumerate(l_indices):
             for s, p in result["p_vals"].items():
+                u = 1.0
+                if randomized:
+                    u = random.random()
                 if ratio:
-                    lranges[i] += (1-alpha < p[li])/T
+                    lranges[i] += (1-alpha < p[li][0] + u*p[li][1])/T
                 else:
-                    lranges[i] += (1-alpha < p[li])
+                    lranges[i] += (1-alpha < p[li][0] + u*p[li][1])
 
     for i, li in enumerate(l_indices):
         lranges[i] /= K
@@ -185,7 +193,7 @@ def alpha_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names
 
     return alpha, lranges
 
-def coverage_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="True Confidence", y_label="Avg. Size", title="Confidence Set Size vs True Confidence", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None):
+def coverage_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_names=None, x_label="True Confidence", y_label="Avg. Size", title="Confidence Set Size vs True Confidence", trunc=-1, save=False, ratio=False, legend=True, show_x_label=True, show_y_label=True, colors=None, filename=None, randomized=True):
     results = I.results
     alpha = np.linspace(0, 1+1/steps, num=steps)
 
@@ -212,12 +220,17 @@ def coverage_v_size(I, opacity=opacity_setting, steps=1000, l_indices=None, l_na
         for i, li in enumerate(l_indices):
             s = result["meta"][2]
             p = result["p_vals"][s][li]
-            cranges[i] += (1-alpha < p)
+            u = 1.0
+            if randomized:
+                u = random.random()
+            cranges[i] += (1-alpha < p[0] + u*p[1])
             for s, p in result["p_vals"].items():
+                if randomized:
+                    u = random.random()
                 if ratio:
-                    sranges[i] += (1-alpha < p[li])/T
+                    sranges[i] += (1-alpha < p[li][0] + u*p[li][1])/T
                 else:
-                    sranges[i] += (1-alpha < p[li])
+                    sranges[i] += (1-alpha < p[li][0] + u*p[li][1])
 
     for i, li in enumerate(l_indices):
         sranges[i] /= K

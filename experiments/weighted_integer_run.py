@@ -1,5 +1,5 @@
 import sys
-from diffusion_source.infection_model_randomized import load_model
+from diffusion_source.infection_model import load_model
 
 files = [
     "data/GlobalAirportTraffic/AirportFlightTraffic.txt",

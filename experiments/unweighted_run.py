@@ -1,6 +1,6 @@
 import sys
 from os.path import exists
-from diffusion_source.infection_model_randomized import load_model
+from diffusion_source.infection_model import load_model
 
 names = ["regular_tree", "small_world", "preferential_attachment"]
 K = 1
