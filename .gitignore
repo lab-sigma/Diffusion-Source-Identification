@@ -5,3 +5,5 @@ data
 *results*
 *probs*
 *saved*
+!experiments/*
+!examples/*
