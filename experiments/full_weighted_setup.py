@@ -8,8 +8,7 @@ files = [
     #"data/StatisticianCitation/TotalCite.txt",
     "data/NorthAmericaHiring/BSchoolHiring.txt",
     "data/NorthAmericaHiring/ComputerScienceHiring.txt",
-    "data/NorthAmericaHiring/HistoryHiring.txt",
-    "data/NorthAmericaHiring/StatisticsHiring.txt"
+    "data/NorthAmericaHiring/HistoryHiring.txt"
 ]
 
 names = [
@@ -17,16 +16,15 @@ names = [
     #"StatisticianCitations",
     "BSchoolHiring",
     "ComputerScienceHiring",
-    "HistoryHiring",
-    "StatisticsHiring"
+    "HistoryHiring"
 ]
 
 IC_scale = 10
 LT_scale = 0.01
 
-losses = [L2_h, L2_after, ADiT_h, ADT_h, Z_minus]
-expectation_after = [True, True, True, True, True]
-canonical = [True, False, True, True, False]
+losses = [L2_h, ADiT_h, ADT_h]
+expectation_after = [False, False, False]
+canonical = [True, True, True]
 
 for index in range(len(names)):
     f = files[index]

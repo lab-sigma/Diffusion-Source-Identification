@@ -9,8 +9,7 @@ files = [
     #"data/StatisticianCitation/TotalCite.txt",
     #"data/NorthAmericaHiring/BSchoolHiring.txt",
     #"data/NorthAmericaHiring/ComputerScienceHiring.txt",
-    #"data/NorthAmericaHiring/HistoryHiring.txt",
-    #"data/NorthAmericaHiring/StatisticsHiring.txt"
+    #"data/NorthAmericaHiring/HistoryHiring.txt"
 ]
 
 names = [
@@ -18,8 +17,7 @@ names = [
     #"StatisticianCitations",
     #"BSchoolHiring",
     #"ComputerScienceHiring",
-    #"HistoryHiring",
-    #"StatisticsHiring"
+    #"HistoryHiring"
 ]
 
 probs_dir = "AFT_probs"

@@ -16,9 +16,6 @@ for m, f in zip(mnames, fnames):
     for t, r in results_dict.items():
         results = r
 
-    if "StatisticsHiring" in m:
-        continue
-
     name = m[:len(m) - 1 - m[::-1].index("_")]
 
     new_row = {

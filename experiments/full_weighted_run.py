@@ -6,8 +6,7 @@ files = [
     #"data/StatisticianCitation/TotalCite.txt",
     "data/NorthAmericaHiring/BSchoolHiring.txt",
     "data/NorthAmericaHiring/ComputerScienceHiring.txt",
-    "data/NorthAmericaHiring/HistoryHiring.txt",
-    "data/NorthAmericaHiring/StatisticsHiring.txt"
+    "data/NorthAmericaHiring/HistoryHiring.txt"
 ]
 
 names = [
@@ -15,8 +14,7 @@ names = [
     #"StatisticianCitations",
     "BSchoolHiring",
     "ComputerScienceHiring",
-    "HistoryHiring",
-    "StatisticsHiring"
+    "HistoryHiring"
 ]
 
 arg = (int(sys.argv[1]) - 1)
@@ -32,7 +30,7 @@ for index in range(len(names)):
     x = I.data_gen(s)
 
     I.p_values(x, meta=(name, x, s))
-    I.store_results("results/IC_timing/{}_{}.p".format(name, arg+1))
+    I.store_results("results/IC_results/{}_{}.p".format(name, arg+1))
 
     I, s, x = load_model("LT_{}".format(name))
     #I.load_probabilities("probs/LT_{}.p".format(name))
@@ -40,4 +38,4 @@ for index in range(len(names)):
     x = I.data_gen(s)
 
     I.p_values(x, meta=(name, x, s))
-    I.store_results("results/LT_timing/{}_{}.p".format(name, arg+1))
+    I.store_results("results/LT_results/{}_{}.p".format(name, arg+1))
